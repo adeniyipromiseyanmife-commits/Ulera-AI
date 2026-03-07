@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthGuard AI — Project Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0B9E8A; --teal-light: #12C5AD; --green: #22C55E;
+    --bg: #060E0D; --bg3: #112420; --card: #0F1F1C;
+    --border: rgba(11,158,138,0.18); --text: #E8F5F3; --muted: #6B9E98;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-weight:300; overflow-x:hidden; }
+  .hero { min-height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:4rem 2rem; position:relative; overflow:hidden; }
+  .hero-glow { position:absolute; width:700px; height:700px; background:radial-gradient(circle, rgba(11,158,138,0.18) 0%, transparent 70%); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
+  .hero-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(11,158,138,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(11,158,138,0.05) 1px,transparent 1px); background-size:60px 60px; pointer-events:none; }
+  .badge { display:inline-flex; align-items:center; gap:0.5rem; background:rgba(11,158,138,0.1); border:1px solid var(--border); border-radius:100px; padding:0.4rem 1.2rem; font-size:0.72rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--teal-light); margin-bottom:2.5rem; position:relative; z-index:1; }
+  .badge-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.5)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  h1 { font-family:'Syne',sans-serif; font-size:clamp(3rem,8vw,7rem); font-weight:800; line-height:1; letter-spacing:-0.03em; position:relative; z-index:1; animation:fadeUp 0.7s ease both; }
+  h1 .accent { background:linear-gradient(135deg, var(--teal-light), var(--green)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .hero-tagline { font-size:clamp(0.95rem,1.8vw,1.2rem); color:var(--muted); margin:1.5rem 0 3rem; max-width:500px; line-height:1.75; position:relative; z-index:1; animation:fadeUp 0.7s 0.15s ease both; }
+  .hero-stats { display:flex; gap:2.5rem; justify-content:center; flex-wrap:wrap; position:relative; z-index:1; animation:fadeUp 0.7s 0.3s ease both; }
+  .stat { text-align:center; }
+  .stat-n { font-family:'Syne',sans-serif; font-size:2.2rem; font-weight:800; color:var(--teal-light); line-height:1; }
+  .stat-l { font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:0.3rem; }
+  section { max-width:1080px; margin:0 auto; padding:5rem 2rem; }
+  .divider { height:1px; background:var(--border); max-width:1080px; margin:0 auto; }
+  .s-tag { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.15em; color:var(--teal); font-weight:600; margin-bottom:0.6rem; }
+  .s-title { font-family:'Syne',sans-serif; font-size:clamp(1.8rem,3.5vw,2.8rem); font-weight:700; letter-spacing:-0.025em; line-height:1.1; margin-bottom:0.9rem; }
+  .s-desc { color:var(--muted); line-height:1.75; font-size:1rem; max-width:540px; margin-bottom:2.5rem; }
+  .modes-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:1.25rem; }
+  .mode-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:1.75rem; position:relative; overflow:hidden; transition:transform 0.25s, border-color 0.25s; }
+  .mode-card:hover { transform:translateY(-5px); border-color:var(--teal); }
+  .mode-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg, var(--teal), var(--green)); }
+  .mode-card.future { opacity:0.65; }
+  .mode-card.future::after { background:linear-gradient(90deg,#374151,#4B5563); }
+  .mode-label { font-family:'Syne',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--teal); margin-bottom:0.4rem; }
+  .mode-card.future .mode-label { color:var(--muted); }
+  .mode-name { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:700; margin-bottom:0.5rem; }
+  .mode-pill { display:inline-block; font-size:0.68rem; padding:0.2rem 0.65rem; border-radius:100px; font-weight:500; margin-bottom:1.4rem; }
+  .pill-launch { background:rgba(34,197,94,0.12); color:var(--green); }
+  .pill-future { background:rgba(107,114,128,0.18); color:#9CA3AF; }
+  .feat-list { list-style:none; display:flex; flex-direction:column; gap:0.55rem; }
+  .feat-list li { display:flex; align-items:center; gap:0.65rem; font-size:0.875rem; color:#9DCDC7; }
+  .feat-list li::before { content:''; width:4px; height:4px; border-radius:50%; background:var(--teal); flex-shrink:0; }
+  .mode-card.future .feat-list li { color:#4B5563; }
+  .mode-card.future .feat-list li::before { background:#374151; }
+  .comp-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1rem; }
+  .comp-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.4rem; transition:all 0.25s; }
+  .comp-card:hover { border-color:var(--teal); background:var(--bg3); }
+  .comp-icon { font-size:1.7rem; margin-bottom:0.7rem; display:block; }
+  .comp-name { font-family:'Syne',sans-serif; font-size:0.9rem; font-weight:600; margin-bottom:0.3rem; line-height:1.3; }
+  .comp-mode { font-size:0.72rem; color:var(--teal); }
+  .survey-wrap { background:var(--card); border:1px solid var(--border); border-radius:22px; padding:2.5rem; display:grid; grid-template-columns:1fr 1fr; gap:2.5rem; align-items:start; }
+  @media(max-width:680px){ .survey-wrap { grid-template-columns:1fr; } }
+  .survey-row { display:flex; align-items:center; gap:0.9rem; padding:0.8rem 1rem; background:rgba(11,158,138,0.05); border:1px solid rgba(11,158,138,0.1); border-radius:9px; margin-bottom:0.6rem; font-size:0.83rem; }
+  .s-l { font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; color:var(--teal-light); width:20px; flex-shrink:0; }
+  .s-n { font-weight:500; }
+  .s-c { margin-left:auto; font-size:0.72rem; color:var(--muted); white-space:nowrap; }
+  .hmo-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:1rem; margin-top:2rem; }
+  .hmo-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.2rem; transition:all 0.25s; }
+  .hmo-card:hover { border-color:var(--teal); transform:translateY(-3px); }
+  .hmo-flag { font-size:1.4rem; margin-bottom:0.45rem; }
+  .hmo-name { font-family:'Syne',sans-serif; font-size:0.9rem; font-weight:700; }
+  .hmo-loc { font-size:0.72rem; color:var(--teal-light); margin-top:0.2rem; }
+  .hmo-price { font-size:0.72rem; color:var(--muted); margin-top:0.15rem; }
+  .roadmap { display:flex; position:relative; margin-top:2.5rem; }
+  .roadmap::before { content:''; position:absolute; top:27px; left:27px; right:27px; height:1px; background:linear-gradient(90deg, var(--teal), rgba(11,158,138,0.15)); }
+  .rm-item { flex:1; text-align:center; position:relative; z-index:1; padding:0 0.5rem; }
+  .rm-dot { width:54px; height:54px; border-radius:50%; background:var(--card); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; margin:0 auto 0.7rem; font-size:1.1rem; }
+  .rm-dot.done { border-color:var(--green); background:rgba(34,197,94,0.12); }
+  .rm-dot.active { border-color:var(--teal); background:rgba(11,158,138,0.15); box-shadow:0 0 20px rgba(11,158,138,0.25); }
+  .rm-label { font-family:'Syne',sans-serif; font-size:0.7rem; font-weight:600; color:var(--muted); line-height:1.3; }
+  .rm-label.active { color:var(--teal-light); }
+  footer { text-align:center; padding:3rem 2rem; border-top:1px solid var(--border); color:var(--muted); font-size:0.82rem; line-height:1.8; }
+  footer strong { color:var(--teal-light); font-weight:500; }
+  .tagline-footer { font-size:0.72rem; opacity:0.45; margin-top:0.5rem; letter-spacing:0.05em; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-grid"></div>
+  <div class="badge"><span class="badge-dot"></span> 3MTT NextGen Fellow · 2026</div>
+  <h1>Health<span class="accent">Guard</span><br>AI</h1>
+  <p class="hero-tagline">An intelligent support system protecting healthcare workers — and the patients who depend on them — everywhere.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-n">3</div><div class="stat-l">Modes</div></div>
+    <div class="stat"><div class="stat-n">5</div><div class="stat-l">Components</div></div>
+    <div class="stat"><div class="stat-n">Global</div><div class="stat-l">Reach</div></div>
+    <div class="stat"><div class="stat-n">Live</div><div class="stat-l">Data Collection</div></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<section>
+  <div class="s-tag">Architecture</div>
+  <h2 class="s-title">Three Modes.<br>One Ecosystem.</h2>
+  <p class="s-desc">HealthGuard AI serves everyone in the healthcare journey — workers, patients, and facilities — under a single intelligent platform.</p>
+  <div class="modes-grid">
+    <div class="mode-card future">
+      <div class="mode-label">Mode 01</div>
+      <div class="mode-name">Hospital / Facility</div>
+      <span class="mode-pill pill-future">Planned Upgrade</span>
+      <ul class="feat-list">
+        <li>Staff Burnout Risk Monitor</li><li>Roster &amp; Shift Management</li>
+        <li>Staff Attendance Tracker</li><li>Critical Staffing Alert</li>
+        <li>Workload Distribution Dashboard</li><li>Documentation Logs</li>
+        <li>Facility-wide Follow-up Tracking</li>
+      </ul>
+    </div>
+    <div class="mode-card">
+      <div class="mode-label">Mode 02</div>
+      <div class="mode-name">Healthcare Worker</div>
+      <span class="mode-pill pill-launch">Launch Focus</span>
+      <ul class="feat-list">
+        <li>Burnout Risk Detection</li><li>Smart Documentation Assistant</li>
+        <li>Schedule Assistant</li><li>Patient Follow-up Reminder</li>
+        <li>Medication / Supplements Reminder</li><li>Water Intake &amp; Healthy Habits</li>
+        <li>Daily Mental Wellness Check-in</li><li>HMO Awareness &amp; Notifications</li>
+      </ul>
+    </div>
+    <div class="mode-card">
+      <div class="mode-label">Mode 03</div>
+      <div class="mode-name">Patient / Individual</div>
+      <span class="mode-pill pill-launch">Launch Focus</span>
+      <ul class="feat-list">
+        <li>Appointment Reminder</li><li>Medication / Supplements Reminder</li>
+        <li>Water Intake &amp; Healthy Habits</li><li>Symptom Diary</li>
+        <li>Caregiver Mode</li><li>Nearest PHC Locator</li>
+        <li>HMO Awareness &amp; Affordable Healthcare</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="s-tag">Core Components</div>
+  <h2 class="s-title">Five Pillars of<br>HealthGuard AI</h2>
+  <p class="s-desc">Each component is purpose-built and maps directly to a specific user need identified through real data collection.</p>
+  <div class="comp-grid">
+    <div class="comp-card"><span class="comp-icon">🧠</span><div class="comp-name">Burnout Risk Detection</div><div class="comp-mode">Mode 2</div></div>
+    <div class="comp-card"><span class="comp-icon">📋</span><div class="comp-name">Smart Documentation Assistant</div><div class="comp-mode">Mode 2</div></div>
+    <div class="comp-card"><span class="comp-icon">⚖️</span><div class="comp-name">Workload Distribution Suggester</div><div class="comp-mode">Mode 1 — Future</div></div>
+    <div class="comp-card"><span class="comp-icon">🔔</span><div class="comp-name">Patient Follow-up &amp; Reminder System</div><div class="comp-mode">Modes 2 &amp; 3</div></div>
+    <div class="comp-card"><span class="comp-icon">🏥</span><div class="comp-name">HMO Awareness &amp; Notification Module</div><div class="comp-mode">Modes 2 &amp; 3</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="s-tag">Data Collection</div>
+  <h2 class="s-title">Built on Real Evidence</h2>
+  <p class="s-desc">The burnout model is trained on real healthcare worker data — collected anonymously via a structured 6-section survey distributed globally.</p>
+  <div class="survey-wrap">
+    <div>
+      <h3 style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;margin-bottom:0.5rem;">Healthcare Worker Experience Survey</h3>
+      <p style="color:var(--muted);font-size:0.88rem;line-height:1.75;margin-bottom:1.75rem;">Targeting Doctors, Nurses, and CHEWs across Nigeria and globally. Anonymous. 8–10 minutes. Distributed via WhatsApp, LinkedIn, and personal networks.</p>
+      <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+        <div><div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--teal-light);line-height:1;">80–100</div><div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:0.2rem;">Target Responses</div></div>
+        <div><div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--teal-light);line-height:1;">6</div><div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:0.2rem;">Sections</div></div>
+        <div><div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--teal-light);line-height:1;">100%</div><div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:0.2rem;">Anonymous</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="survey-row"><span class="s-l">A</span><span class="s-n">About You</span><span class="s-c">4 questions</span></div>
+      <div class="survey-row"><span class="s-l">B</span><span class="s-n">Your Typical Workday</span><span class="s-c">6 questions</span></div>
+      <div class="survey-row"><span class="s-l">C</span><span class="s-n">How Work Affects Your Life</span><span class="s-c">10 scales</span></div>
+      <div class="survey-row"><span class="s-l">D</span><span class="s-n">Your Workplace</span><span class="s-c">5 questions</span></div>
+      <div class="survey-row"><span class="s-l">E</span><span class="s-n">Work Experience Scale</span><span class="s-c">14 scales</span></div>
+      <div class="survey-row"><span class="s-l">F</span><span class="s-n">In Your Own Words</span><span class="s-c">4 open</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="s-tag">HMO Module</div>
+  <h2 class="s-title">Location-Based<br>Healthcare Access</h2>
+  <p class="s-desc">During onboarding, users select their state or country. The app surfaces only the relevant HMO plans and affordable healthcare options for their location.</p>
+  <div class="hmo-grid">
+    <div class="hmo-card"><div class="hmo-flag">🇳🇬</div><div class="hmo-name">OYSHIA</div><div class="hmo-loc">Oyo State</div><div class="hmo-price">₦18,000 / year</div></div>
+    <div class="hmo-card"><div class="hmo-flag">🇳🇬</div><div class="hmo-name">LASHMA</div><div class="hmo-loc">Lagos State</div><div class="hmo-price">State plan</div></div>
+    <div class="hmo-card"><div class="hmo-flag">🇳🇬</div><div class="hmo-name">NHIS</div><div class="hmo-loc">Federal Nigeria</div><div class="hmo-price">Federal plan</div></div>
+    <div class="hmo-card"><div class="hmo-flag">🇬🇧</div><div class="hmo-name">NHS</div><div class="hmo-loc">United Kingdom</div><div class="hmo-price">Free at point of use</div></div>
+    <div class="hmo-card"><div class="hmo-flag">🇬🇭</div><div class="hmo-name">NHIS Ghana</div><div class="hmo-loc">Ghana</div><div class="hmo-price">National plan</div></div>
+    <div class="hmo-card" style="border-style:dashed;display:flex;align-items:center;justify-content:center;min-height:100px;"><div style="text-align:center;color:var(--muted);font-size:0.8rem;">+ More regions<br>coming soon</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="s-tag">Project Stage</div>
+  <h2 class="s-title">Where We Are Now</h2>
+  <p class="s-desc">HealthGuard AI is currently in active data collection under the 3MTT NextGen Programme.</p>
+  <div class="roadmap">
+    <div class="rm-item"><div class="rm-dot done">✅</div><div class="rm-label active">Concept</div></div>
+    <div class="rm-item"><div class="rm-dot active">📊</div><div class="rm-label active">Data Collection</div></div>
+    <div class="rm-item"><div class="rm-dot">🤖</div><div class="rm-label">ML Model</div></div>
+    <div class="rm-item"><div class="rm-dot">📱</div><div class="rm-label">App Build</div></div>
+    <div class="rm-item"><div class="rm-dot">🚀</div><div class="rm-label">Launch</div></div>
+  </div>
+</section>
+
+<footer>
+  <strong>HealthGuard AI</strong> · By Promise Yanmife Adeniyi<br>
+  3MTT NextGen Fellow · Nigeria · 2026
+  <div class="tagline-footer">Protecting healthcare workers. Everywhere.</div>
+</footer>
+
+</body>
+</html>
