@@ -1,5 +1,5 @@
 # 🛡️ HealthGuard AI
-### *Protecting healthcare workers — and the patients who depend on them.*
+### *They care for us. We care for them.*
 
 > **3MTT NextGen Knowledge Showcase 2026** | FEED Pillars: Digital Inclusion & Education
 > Built by **Promise Yanmife Adeniyi** — 3MTT NextGen Fellow, Nigeria
@@ -8,10 +8,12 @@
 
 ## 📌 What is HealthGuard AI?
 
-HealthGuard AI is a mobile-first intelligent support system that addresses Nigeria's dual healthcare crisis:
+HealthGuard AI is a mobile-first **intelligent, predictive health companion** that adapts to who you are and how you live. It was named HealthGuard *AI* — not just HealthGuard — because it's designed to be generative, predictive, and context-aware. A market trader under the sun has different health risks than a civil servant in an air-conditioned office. A student under exam stress needs different guidance than an okada driver on a long route. HealthGuard AI understands this and responds accordingly.
 
-- **Healthcare workers** (Doctors, Nurses, CHEWs) burn out silently — with no easy tool to self-monitor or get early support
-- **Patients and individuals** don't know what HMO plans they're entitled to in their state — so they delay or avoid care entirely
+It addresses Nigeria's dual healthcare crisis:
+
+- **Healthcare professionals** (Doctors, Nurses, CHEWs) burn out silently — with no easy tool to self-monitor or get early support
+- **Patients and individuals** across all professions don't know what HMO plans they're entitled to in their state — so they delay or avoid care entirely
 
 HealthGuard AI solves both problems under one platform, across **3 user modes** and **all 36 states + FCT**.
 
@@ -26,7 +28,7 @@ HealthGuard AI solves both problems under one platform, across **3 user modes** 
 
 ## 🧩 Features
 
-### Mode 02 — Healthcare Worker
+### Mode 02 — Healthcare Professional
 | Feature | Description |
 |---|---|
 | 🔥 AI Burnout Risk Tracker | Real-time burnout score (0–100) tracking exhaustion, depersonalisation & fulfilment |
@@ -34,23 +36,37 @@ HealthGuard AI solves both problems under one platform, across **3 user modes** 
 | 🔔 Reminder System | Shift reminders, patient follow-ups & wellness check-ins |
 | 🏥 HMO Awareness Module | All 36 states + FCT health insurance plans with pricing & registration info |
 | 💬 Daily Wellness Check-in | Mood tracking to support mental health before and after shifts |
+| 📲 Scan-to-Connect *(Coming Soon)* | QR-based patient linking for real-time medication alerts & automated follow-ups |
 
-### Mode 03 — Patient / Individual
+### Mode 03 — Patient / Client
 | Feature | Description |
 |---|---|
+| 🌦️ Profession-Aware Health Tips | AI-tailored advice based on your occupation — trader, driver, student, civil servant, caregiver & more |
 | 💊 Medication Reminders | Configurable reminders for drugs, supplements & water intake |
 | 📓 Symptom Diary | Log and track symptoms over time |
 | 🏥 HMO Awareness Module | Location-based HMO plan discovery across all Nigerian states |
 | 📍 PHC Locator | Find nearest Primary Healthcare Centres |
+| 📲 Scan-to-Connect *(Coming Soon)* | Link with your healthcare provider to receive reminders and follow-up notifications in real time |
 
 ### Mode 01 — Health Facility *(Coming Soon)*
 > Clinic and hospital admin dashboard — currently in development.
 
 ---
 
-## 🗺️ HMO Coverage — All 36 States + FCT
+## 🤖 Why "AI" in the Name
 
-HealthGuard AI maps the official State Social Health Insurance Agency (SSHIA) for every state in Nigeria:
+Most health apps are static — they show the same information to everyone. HealthGuard AI is different by design. The "AI" reflects a core philosophy: **the app should predict, adapt, and generate** based on who you are.
+
+- A **market trader** under the sun needs warnings about heat stroke, hydration and sunburn
+- A **bus driver** needs reminders about fatigue, posture and concentration
+- A **student** needs guidance on stress, sleep and exam-season immunity
+- A **caregiver** needs reminders that their own health matters too
+
+The Scan-to-Connect feature will further power this vision — when a healthcare worker links to a patient, the AI can automatically track whether medications were taken, generate follow-up prompts, and flag gaps in care without a single phone call.
+
+---
+
+## 🗺️ HMO Coverage — All 36 States + FCT
 
 | Zone | States Covered |
 |---|---|
@@ -68,7 +84,7 @@ HealthGuard AI maps the official State Social Health Insurance Agency (SSHIA) fo
 
 - **HTML5** — structure & semantic markup
 - **CSS3** — mobile-first responsive design with custom properties
-- **JavaScript (Vanilla)** — interactive logic, state management, burnout scoring
+- **JavaScript (Vanilla)** — interactive logic, state management, burnout scoring, profession-aware AI tips
 - **AI-assisted development** — Claude AI by Anthropic (see disclosure below)
 - **No-code / low-code methodology** — aligned with 3MTT NextGen Workshop (Lovable, Bolt.new, Softr)
 - **Data collection** — Google Forms survey distributed via WhatsApp & LinkedIn
@@ -77,10 +93,8 @@ HealthGuard AI maps the official State Social Health Insurance Agency (SSHIA) fo
 
 ## 📊 Evidence Base
 
-The burnout risk model is grounded in real data:
-
 - **Survey:** Healthcare Worker Experience Survey (anonymous, 6 sections)
-- **Target respondents:** Doctors, Nurses, CHEWs, & other healthcare professionals across Nigeria and globally
+- **Target respondents:** Doctors, Nurses & CHEWs across Nigeria and globally
 - **Distribution:** WhatsApp networks, LinkedIn, professional healthcare groups
 - **Sections cover:** Personal background · Work environment · Burnout indicators · HMO awareness · Wellness habits · Feedback
 
@@ -91,22 +105,19 @@ The burnout risk model is grounded in real data:
 ```
 healthguard-ai/
 │
-├── index.html                  # Main app (all-in-one)
-├── HealthGuard_AI_Demo.html    # Interactive app demo
-├── HealthGuard_AI_Preview.html # Full project preview page
-├── HealthGuard_LinkedIn.html   # LinkedIn graphic asset
-└── README.md                   # You are here
+├── index.html                          # Main app (all-in-one)
+├── HealthGuard_AI_Demo_V3.html         # Interactive app demo (latest)
+├── HealthGuard_AI_Solution_Brief.docx  # Full solution brief
+└── README.md                           # You are here
 ```
 
 ---
 
 ## 🤖 AI / Tool Disclosure
 
-This project was built with AI assistance as part of the 3MTT NextGen Knowledge Showcase.
-
 | Tool | How it was used |
 |---|---|
-| **Claude AI (Anthropic)** | Code generation, documentation writing, HMO database research, UI logic, Solution Brief drafting |
+| **Claude AI (Anthropic)** | Code generation, documentation writing, HMO database research, UI logic, profession-based tip system, Solution Brief drafting |
 | **3MTT NextGen Workshop tools** | No-code/low-code MVP methodology (Lovable, Bolt.new, Softr) |
 
 AI was used meaningfully and purposefully — to accelerate development and improve quality, not to replace the original research, problem identification, and project direction, which were entirely the work of the developer.
@@ -117,8 +128,8 @@ AI was used meaningfully and purposefully — to accelerate development and impr
 
 | Pillar | How HealthGuard AI qualifies |
 |---|---|
-| **D — Digital Inclusion** | Assistive health technology for underserved workers and patients |
-| **E — Education** | Health literacy — teaching Nigerians what HMO plans they are entitled to |
+| **D — Digital Inclusion** | Assistive health technology for underserved workers and patients across all professions and income levels |
+| **E — Education** | Health literacy — teaching Nigerians what HMO plans they're entitled to, with profession-specific health guidance |
 
 ---
 
@@ -134,8 +145,8 @@ AI was used meaningfully and purposefully — to accelerate development and impr
 ## 📬 Contact
 
 **Promise Yanmife Adeniyi**
-3MTT NextGen Fellow · Nigeria · 2026
+3MTT NextGen Fellow. AI/ML. FE/25/338214153· Nigeria · 2026
 
 ---
 
-*HealthGuard AI — Protecting healthcare workers. Everywhere.*
+*HealthGuard AI — They care for us. We care for them.*
