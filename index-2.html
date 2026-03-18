@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HealthGuard AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal:#0B9E8A;--teal2:#12C5AD;--teal3:rgba(11,158,138,0.12);
+  --green:#22C55E;--amber:#F59E0B;--red:#EF4444;--purple:#7C3AED;--purple2:#A78BFA;
+  --bg:#07100F;--bg2:#0D1A18;--card:#101E1C;--card2:#152421;
+  --border:rgba(11,158,138,0.15);--border2:rgba(11,158,138,0.25);
+  --text:#E2F0EE;--muted:#5E8E89;--muted2:#8BBDB8;
+  --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:var(--font);color:var(--text);}
+#app{width:100%;height:100vh;position:relative;overflow:hidden;background:var(--bg2);}
+
+/* SCREENS */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;transition:opacity 0.35s ease;}
+.screen.hidden{opacity:0;pointer-events:none;}
+
+/* SCROLL */
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.scroll-area::-webkit-scrollbar{display:none;}
+
+/* TOP BAR */
+.top-bar{display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1.1rem;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;}
+.back-btn{background:none;border:none;color:var(--muted2);font-size:1.2rem;cursor:pointer;padding:0.2rem;}
+
+/* BADGES */
+.badge{font-size:0.58rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:0.2rem 0.55rem;border-radius:100px;}
+.badge-teal{background:var(--teal3);color:var(--teal2);border:1px solid var(--border2);}
+.badge-green{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2);}
+.badge-amber{background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.25);}
+.badge-purple{background:rgba(124,58,237,0.12);color:var(--purple2);border:1px solid rgba(124,58,237,0.25);}
+
+/* LANDING SLIDES */
+.slide-container{position:relative;flex:1;overflow:hidden;}
+.land-slide{position:absolute;inset:0;display:flex;flex-direction:column;padding:1.25rem;overflow-y:auto;scrollbar-width:none;transition:opacity 0.45s ease;}
+.land-slide::-webkit-scrollbar{display:none;}
+.land-slide.active{opacity:1;pointer-events:all;}
+.land-slide.inactive{opacity:0;pointer-events:none;}
+.hero{text-align:center;margin-bottom:1.25rem;}
+.hero-icon{font-size:2.8rem;margin-bottom:0.4rem;}
+.hero-title{font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;}
+.hero-sub{font-size:0.68rem;color:var(--muted);font-style:italic;margin-top:0.15rem;}
+.slide-card{border-radius:20px;padding:1.25rem;border:1.5px solid;flex:1;display:flex;flex-direction:column;}
+.card-header{display:flex;align-items:center;gap:0.75rem;margin-bottom:0.85rem;}
+.card-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+.card-mode{font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.12rem;}
+.card-name{font-size:1rem;font-weight:700;}
+.live-dot{width:8px;height:8px;border-radius:50%;margin-left:auto;flex-shrink:0;}
+.card-desc{font-size:0.73rem;color:var(--muted2);line-height:1.6;margin-bottom:0.85rem;flex:1;}
+.tags{display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:1rem;}
+.tag{font-size:0.58rem;padding:0.18rem 0.5rem;border-radius:5px;border:1px solid;}
+.slide-btn{width:100%;padding:0.75rem;border:none;border-radius:12px;color:white;font-family:var(--font);font-size:0.85rem;font-weight:700;cursor:pointer;}
+.slide-btn:disabled{cursor:not-allowed;background:rgba(107,114,128,0.15)!important;color:#6B7280;border:1px solid rgba(107,114,128,0.2);}
+
+/* SLIDE NAV */
+.slide-nav{display:flex;align-items:center;justify-content:center;gap:1rem;padding:0.75rem 0;flex-shrink:0;}
+.nav-arrow{background:none;border:none;color:var(--teal2);font-size:1.5rem;cursor:pointer;padding:0.25rem 0.5rem;}
+.nav-arrow.dim{opacity:0.3;}
+.dots{display:flex;gap:0.4rem;}
+.dot{height:3px;border-radius:2px;transition:all 0.3s;}
+.dot.active{width:20px;}
+.dot.inactive{width:6px;background:var(--border2)!important;}
+
+/* ONBOARDING */
+.ob-wrap{padding:1.25rem;flex:1;overflow-y:auto;scrollbar-width:none;}
+.ob-wrap::-webkit-scrollbar{display:none;}
+.ob-title{font-size:1.1rem;font-weight:700;margin-bottom:0.25rem;}
+.ob-sub{font-size:0.75rem;color:var(--muted2);margin-bottom:1.25rem;}
+.ob-label{font-size:0.72rem;color:var(--muted2);margin-bottom:0.4rem;display:block;}
+.ob-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:0.65rem 0.85rem;color:var(--text);font-family:var(--font);font-size:0.85rem;outline:none;margin-bottom:0.75rem;}
+.ob-input:focus{border-color:var(--teal);}
+.ob-select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:0.65rem 0.85rem;color:var(--text);font-family:var(--font);font-size:0.82rem;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%230B9E8A' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.85rem center;background-color:var(--bg);margin-bottom:0.75rem;}
+.ob-btn{width:100%;padding:0.85rem;background:linear-gradient(135deg,var(--teal),#0a8070);border:none;border-radius:12px;color:white;font-family:var(--font);font-size:0.9rem;font-weight:700;cursor:pointer;margin-top:0.5rem;}
+.ob-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* MAIN APP */
+.app-content{padding:1rem 1.1rem 5rem;}
+.section-label{font-size:0.62rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem;margin-top:1rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem 1.1rem;margin-bottom:0.75rem;}
+
+/* BURNOUT */
+.burn-ring-wrap{position:relative;width:88px;height:88px;margin:0 auto 0.75rem;}
+.ring-bg{fill:none;stroke:rgba(11,158,138,0.1);stroke-width:6;}
+.ring-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1s ease,stroke 0.3s;}
+.score-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.score-n{font-family:var(--mono);font-size:1.4rem;font-weight:500;line-height:1;}
+.score-l{font-size:0.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;}
+.burn-level{text-align:center;font-size:0.75rem;font-weight:600;margin-bottom:0.75rem;}
+.bar-row{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.4rem;}
+.bar-label{font-size:0.62rem;color:var(--muted);width:70px;flex-shrink:0;}
+.bar-track{flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:2px;transition:width 1s ease;}
+.bar-val{font-family:var(--mono);font-size:0.6rem;color:var(--muted2);width:24px;text-align:right;}
+.burn-slider{width:100%;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:rgba(255,255,255,0.08);outline:none;cursor:pointer;margin:0.5rem 0;}
+.burn-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--teal2);cursor:pointer;box-shadow:0 0 8px rgba(11,158,138,0.5);}
+.slider-labels{display:flex;justify-content:space-between;font-size:0.58rem;color:var(--muted);}
+
+/* REMINDERS */
+.rem-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.85rem 1rem;display:flex;align-items:center;gap:0.75rem;cursor:pointer;margin-bottom:0.5rem;transition:border-color 0.2s;}
+.rem-item:hover{border-color:var(--teal);}
+.ri-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;transition:all 0.2s;}
+.rem-item.done .ri-check{background:var(--teal);border-color:var(--teal);color:white;}
+.rem-item.done .ri-title{text-decoration:line-through;opacity:0.5;}
+.ri-info{flex:1;}
+.ri-title{font-size:0.82rem;font-weight:500;}
+.ri-time{font-size:0.68rem;color:var(--muted);margin-top:0.1rem;}
+.add-btn{width:100%;padding:0.6rem;background:transparent;border:1.5px dashed var(--border2);border-radius:10px;color:var(--teal2);font-family:var(--font);font-size:0.78rem;font-weight:600;cursor:pointer;margin-top:0.5rem;}
+.rem-form{background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.85rem;margin-top:0.5rem;display:none;}
+.rem-form.show{display:block;}
+.rf-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.7rem;color:var(--text);font-family:var(--font);font-size:0.78rem;outline:none;margin-bottom:0.5rem;}
+.rf-input:focus{border-color:var(--teal);}
+.rf-row{display:flex;gap:0.5rem;}
+.rf-save{flex:1;padding:0.5rem;background:var(--teal);border:none;border-radius:8px;color:white;font-family:var(--font);font-size:0.75rem;font-weight:600;cursor:pointer;}
+.rf-cancel{padding:0.5rem 0.75rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:var(--font);font-size:0.75rem;cursor:pointer;}
+
+/* HMO */
+.hmo-dropdown{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:0.5rem 0.75rem;color:var(--text);font-family:var(--font);font-size:0.8rem;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%230B9E8A' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;background-color:var(--bg);}
+.hmo-result{margin-top:0.75rem;padding:0.75rem;background:var(--teal3);border:1px solid var(--border2);border-radius:10px;display:none;}
+.hmo-result.show{display:block;}
+.hmo-name{font-size:0.85rem;font-weight:700;color:var(--teal2);margin-bottom:0.2rem;}
+.hmo-detail{font-size:0.72rem;color:var(--muted2);line-height:1.5;}
+.hmo-link{font-size:0.7rem;color:var(--teal2);font-weight:600;margin-top:0.4rem;display:inline-block;text-decoration:none;}
+
+/* MOOD */
+.mood-row{display:flex;gap:0.5rem;justify-content:center;}
+.mood-btn{flex:1;padding:0.5rem 0;border-radius:10px;border:1px solid var(--border);background:transparent;font-size:1.1rem;cursor:pointer;transition:all 0.2s;}
+.mood-btn.selected{background:var(--teal3);border-color:var(--teal);transform:scale(1.05);}
+
+/* DOC */
+.doc-area{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:0.7rem 0.8rem;font-size:0.75rem;color:var(--muted2);line-height:1.6;min-height:80px;margin-bottom:0.5rem;font-family:var(--mono);resize:vertical;outline:none;}
+.doc-area:focus{border-color:var(--teal);color:var(--text);}
+.doc-tag{font-size:0.65rem;padding:0.2rem 0.55rem;background:var(--teal3);border:1px solid var(--border2);border-radius:6px;color:var(--teal2);cursor:pointer;font-weight:500;margin-right:0.4rem;margin-bottom:0.4rem;display:inline-block;transition:all 0.15s;}
+.doc-tag.active,.doc-tag:hover{background:var(--teal);color:white;}
+.doc-gen-btn{flex:1;padding:0.6rem;background:linear-gradient(135deg,var(--teal),#0a8070);border:none;border-radius:10px;color:white;font-family:var(--font);font-size:0.8rem;font-weight:600;cursor:pointer;}
+.doc-copy-btn{padding:0.6rem 0.85rem;background:var(--card2);border:1px solid var(--border2);border-radius:10px;color:var(--teal2);font-family:var(--font);font-size:0.75rem;font-weight:600;cursor:pointer;}
+
+/* PHC */
+.phc-item{display:flex;align-items:center;gap:0.65rem;padding:0.6rem 0.75rem;background:var(--bg);border:1px solid var(--border);border-radius:9px;font-size:0.78rem;cursor:pointer;margin-bottom:0.4rem;}
+.phc-item:hover{border-color:var(--teal);}
+.phc-dist{margin-left:auto;font-size:0.68rem;color:var(--teal2);font-family:var(--mono);}
+.phc-btn{width:100%;padding:0.55rem;background:var(--teal);border:none;border-radius:10px;color:white;font-family:var(--font);font-size:0.78rem;font-weight:600;cursor:pointer;margin-bottom:0.75rem;}
+
+/* STC */
+.stc-card{background:linear-gradient(135deg,rgba(11,158,138,0.08),rgba(18,197,173,0.04));border:1.5px dashed var(--border2);border-radius:16px;padding:1.1rem;margin-bottom:0.75rem;}
+.stc-feat{display:flex;align-items:center;gap:0.55rem;font-size:0.72rem;color:var(--muted2);margin-bottom:0.4rem;}
+
+/* WEATHER */
+.weather-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem 1.1rem;margin-bottom:0.75rem;}
+.weather-tip{display:flex;align-items:flex-start;gap:0.5rem;font-size:0.72rem;color:var(--muted2);line-height:1.4;margin-bottom:0.45rem;}
+
+/* TOGGLE */
+.toggle-switch{width:38px;height:22px;background:var(--border2);border-radius:11px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
+.toggle-switch.on{background:var(--teal);}
+.toggle-knob{position:absolute;top:3px;left:3px;width:16px;height:16px;background:white;border-radius:50%;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+.toggle-switch.on .toggle-knob{transform:translateX(16px);}
+
+/* BOTTOM NAV */
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;height:64px;background:var(--card);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:0 0.5rem 4px;z-index:20;flex-shrink:0;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding:0.35rem 0;border:none;background:transparent;cursor:pointer;border-radius:10px;}
+.nav-icon{font-size:1.1rem;}
+.nav-label{font-size:0.56rem;font-weight:500;color:var(--muted);}
+.nav-btn.active .nav-label{color:var(--teal2);}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--teal2);opacity:0;}
+.nav-btn.active .nav-dot{opacity:1;}
+
+/* PANELS */
+.panel{position:fixed;inset:0;background:var(--bg2);z-index:60;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.35s ease;}
+.panel.open{transform:translateY(0);}
+.panel-scroll{flex:1;overflow-y:auto;padding:1.25rem;scrollbar-width:none;}
+.panel-scroll::-webkit-scrollbar{display:none;}
+.panel-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.85rem 1rem;display:flex;align-items:center;gap:0.75rem;cursor:pointer;margin-bottom:0.5rem;}
+.mode-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:1rem 1.1rem;margin-bottom:0.75rem;cursor:pointer;display:flex;align-items:center;gap:0.85rem;transition:all 0.2s;}
+.mode-card.sel{border-color:var(--teal);background:var(--card2);}
+.mc-check{margin-left:auto;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:0.65rem;transition:all 0.2s;}
+.mode-card.sel .mc-check{background:var(--teal2);border-color:var(--teal2);color:white;}
+
+/* CHAT */
+.chat-msgs{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;scrollbar-width:none;}
+.chat-msgs::-webkit-scrollbar{display:none;}
+.msg-user{display:flex;justify-content:flex-end;}
+.msg-ai{display:flex;gap:0.5rem;align-items:flex-start;}
+.bubble-user{background:linear-gradient(135deg,#7C3AED,#6D28D9);border-radius:14px 14px 4px 14px;padding:0.65rem 0.85rem;max-width:80%;}
+.bubble-ai{background:var(--card);border:1px solid var(--border);border-radius:14px 14px 14px 4px;padding:0.65rem 0.85rem;max-width:82%;}
+.bubble-text{font-size:0.78rem;line-height:1.55;}
+.bubble-time{font-size:0.58rem;color:rgba(255,255,255,0.5);margin-top:0.3rem;}
+.bubble-time-ai{font-size:0.58rem;color:var(--muted);margin-top:0.3rem;}
+.ai-avatar{width:28px;height:28px;border-radius:8px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;}
+.chat-disclaimer{font-size:0.6rem;color:var(--muted);text-align:center;padding:0.3rem 0.6rem;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.12);border-radius:6px;}
+.chat-bar{padding:0.65rem 0.85rem;border-top:1px solid var(--border);background:var(--bg2);display:flex;gap:0.5rem;align-items:flex-end;flex-shrink:0;}
+.chat-input-wrap{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.5rem 0.75rem;display:flex;align-items:center;gap:0.5rem;}
+.chat-input{flex:1;background:none;border:none;color:var(--text);font-family:var(--font);font-size:0.8rem;outline:none;resize:none;line-height:1.4;max-height:80px;}
+.chat-send{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#7C3AED,#6D28D9);border:none;color:white;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.lang-sel{background:var(--card);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font);font-size:0.65rem;padding:0.2rem 0.35rem;outline:none;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ═══════════════ LANDING ═══════════════ -->
+<div class="screen" id="s-landing">
+  <div class="slide-container" id="slideWrap">
+
+    <!-- Slide 0: Mode 02 -->
+    <div class="land-slide active" id="sl-0">
+      <div class="hero">
+        <div class="hero-icon" style="filter:drop-shadow(0 0 20px rgba(11,158,138,0.5));">🛡️</div>
+        <div class="hero-title" style="color:var(--teal2);">HealthGuard AI</div>
+        <div class="hero-sub">They save lives. We guard theirs.</div>
+      </div>
+      <div class="slide-card" style="background:linear-gradient(135deg,rgba(11,158,138,0.08),rgba(11,158,138,0.03));border-color:var(--teal);">
+        <div class="card-header">
+          <div class="card-icon" style="background:var(--teal3);border:1px solid var(--border2);">🩺</div>
+          <div><div class="card-mode" style="color:var(--teal2);">Mode 02</div><div class="card-name">Healthcare Professional</div></div>
+          <div class="live-dot" style="background:var(--green);box-shadow:0 0 8px var(--green);"></div>
+        </div>
+        <div class="card-desc">For doctors, nurses, CHEWs, pharmacists and all health workers. Track burnout, document smarter and manage your shift.</div>
+        <div class="tags">
+          <span class="tag" style="background:var(--teal3);border-color:var(--border2);color:var(--teal2);">🔥 Burnout Tracker</span>
+          <span class="tag" style="background:var(--teal3);border-color:var(--border2);color:var(--teal2);">🤖 Smart Docs</span>
+          <span class="tag" style="background:var(--teal3);border-color:var(--border2);color:var(--teal2);">🏥 HMO Awareness</span>
+          <span class="tag" style="background:var(--teal3);border-color:var(--border2);color:var(--teal2);">📅 Schedule</span>
+          <span class="tag" style="background:var(--teal3);border-color:var(--border2);color:var(--teal2);">💬 Wellness Check-in</span>
+        </div>
+        <button class="slide-btn" style="background:linear-gradient(135deg,var(--teal),#0a8070);" onclick="goOnboard('worker')">Enter Mode 02 →</button>
+      </div>
+    </div>
+
+    <!-- Slide 1: Mode 03 -->
+    <div class="land-slide inactive" id="sl-1">
+      <div class="hero">
+        <div class="hero-icon" style="filter:drop-shadow(0 0 20px rgba(34,197,94,0.4));">🛡️</div>
+        <div class="hero-title" style="color:var(--green);">HealthGuard AI</div>
+        <div class="hero-sub">They save lives. We guard theirs.</div>
+      </div>
+      <div class="slide-card" style="background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.03));border-color:rgba(34,197,94,0.4);">
+        <div class="card-header">
+          <div class="card-icon" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);">🙋</div>
+          <div><div class="card-mode" style="color:var(--green);">Mode 03</div><div class="card-name">Patient / Client</div></div>
+          <div class="live-dot" style="background:var(--green);box-shadow:0 0 8px var(--green);"></div>
+        </div>
+        <div class="card-desc">For individuals, traders, students, drivers and caregivers. Get personalised health tips, find HMO plans and locate nearby clinics.</div>
+        <div class="tags">
+          <span class="tag" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.2);color:var(--green);">🌦️ Health Tips</span>
+          <span class="tag" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.2);color:var(--green);">💊 Reminders</span>
+          <span class="tag" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.2);color:var(--green);">📍 PHC Locator</span>
+          <span class="tag" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.2);color:var(--green);">🏥 HMO Plans</span>
+          <span class="tag" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.2);color:var(--green);">📓 Symptom Diary</span>
+        </div>
+        <button class="slide-btn" style="background:linear-gradient(135deg,#22C55E,#16a34a);" onclick="goOnboard('patient')">Enter Mode 03 →</button>
+      </div>
+    </div>
+
+    <!-- Slide 2: Mode 01 -->
+    <div class="land-slide inactive" id="sl-2">
+      <div class="hero">
+        <div class="hero-icon" style="opacity:0.5;">🛡️</div>
+        <div class="hero-title" style="color:#6B7280;">HealthGuard AI</div>
+        <div class="hero-sub">They save lives. We guard theirs.</div>
+      </div>
+      <div class="slide-card" style="background:rgba(107,114,128,0.05);border-color:rgba(107,114,128,0.25);opacity:0.75;">
+        <div class="card-header">
+          <div class="card-icon" style="background:rgba(107,114,128,0.15);border:1px solid rgba(107,114,128,0.2);">🏥</div>
+          <div style="flex:1;"><div class="card-mode" style="color:#6B7280;">Mode 01</div><div class="card-name">Health Facility</div></div>
+          <span class="badge badge-amber">Coming Soon</span>
+        </div>
+        <div class="card-desc">For hospitals, clinics and health facilities. Staff burnout monitoring, roster management and workload distribution dashboard.</div>
+        <div class="tags">
+          <span class="tag" style="background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.2);color:#6B7280;">📊 Staff Monitor</span>
+          <span class="tag" style="background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.2);color:#6B7280;">🗓️ Roster</span>
+          <span class="tag" style="background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.2);color:#6B7280;">⚠️ Alerts</span>
+        </div>
+        <button class="slide-btn" disabled>Coming Soon</button>
+      </div>
+    </div>
+
+    <!-- Slide 3: Chat -->
+    <div class="land-slide inactive" id="sl-3">
+      <div class="hero">
+        <div class="hero-icon" style="filter:drop-shadow(0 0 20px rgba(124,58,237,0.5));">🛡️</div>
+        <div class="hero-title" style="color:var(--purple2);">HealthGuard AI</div>
+        <div class="hero-sub">They save lives. We guard theirs.</div>
+      </div>
+      <div class="slide-card" style="background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(124,58,237,0.03));border-color:rgba(124,58,237,0.4);">
+        <div class="card-header">
+          <div class="card-icon" style="background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);">💬</div>
+          <div><div class="card-mode" style="color:var(--purple2);">AI Assistant</div><div class="card-name">Chat with HealthGuard</div></div>
+          <div class="live-dot" style="background:var(--purple2);box-shadow:0 0 8px var(--purple2);"></div>
+        </div>
+        <div class="card-desc">Ask health questions in your language. Get instant AI-powered guidance — no login required.</div>
+        <div class="tags">
+          <span class="tag" style="background:rgba(124,58,237,0.1);border-color:rgba(124,58,237,0.2);color:var(--purple2);">🇳🇬 Nigerian English</span>
+          <span class="tag" style="background:rgba(124,58,237,0.1);border-color:rgba(124,58,237,0.2);color:var(--purple2);">🇳🇬 Yorùbá</span>
+          <span class="tag" style="background:rgba(124,58,237,0.1);border-color:rgba(124,58,237,0.2);color:var(--purple2);">🇳🇬 Igbo</span>
+          <span class="tag" style="background:rgba(124,58,237,0.1);border-color:rgba(124,58,237,0.2);color:var(--purple2);">🇳🇬 Hausa</span>
+          <span class="tag" style="background:rgba(124,58,237,0.1);border-color:rgba(124,58,237,0.2);color:var(--purple2);">🇳🇬 Naija Pidgin</span>
+        </div>
+        <button class="slide-btn" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);" onclick="goChat()">💬 Start Chatting →</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="slide-nav">
+    <button class="nav-arrow dim" id="prevBtn" onclick="prevSlide()">‹</button>
+    <div class="dots">
+      <div class="dot active" id="d0" style="background:var(--teal2);"></div>
+      <div class="dot inactive" id="d1" style="background:var(--green);"></div>
+      <div class="dot inactive" id="d2" style="background:#6B7280;"></div>
+      <div class="dot inactive" id="d3" style="background:var(--purple2);"></div>
+    </div>
+    <button class="nav-arrow" id="nextBtn" onclick="nextSlide()">›</button>
+  </div>
+</div>
+
+<!-- ═══════════════ ONBOARDING ═══════════════ -->
+<div class="screen hidden" id="s-onboard">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goScreen('s-landing')">←</button>
+    <div style="font-size:1rem;font-weight:700;flex:1;" id="ob-title">Healthcare Professional</div>
+    <span class="badge badge-teal" id="ob-badge">Mode 02</span>
+  </div>
+  <div class="ob-wrap">
+    <div id="ob-s1">
+      <div class="ob-title">Tell us about you</div>
+      <div class="ob-sub">Your details help personalise your experience.</div>
+      <label class="ob-label">Full Name</label>
+      <input class="ob-input" id="ob-name" type="text" placeholder="e.g. Promise Adeniyi" oninput="validateOb1()">
+      <label class="ob-label">Your State</label>
+      <select class="ob-select" id="ob-state" onchange="validateOb1()">
+        <option value="">— Select your state —</option>
+        <option>FCT Abuja</option>
+        <optgroup label="South West"><option>Lagos</option><option>Oyo</option><option>Ogun</option><option>Osun</option><option>Ondo</option><option>Ekiti</option></optgroup>
+        <optgroup label="South East"><option>Enugu</option><option>Anambra</option><option>Imo</option><option>Abia</option><option>Ebonyi</option></optgroup>
+        <optgroup label="South South"><option>Rivers</option><option>Delta</option><option>Edo</option><option>Bayelsa</option><option>Akwa Ibom</option><option>Cross River</option></optgroup>
+        <optgroup label="North Central"><option>Kwara</option><option>Kogi</option><option>Benue</option><option>Nasarawa</option><option>Niger</option><option>Plateau</option></optgroup>
+        <optgroup label="North West"><option>Kano</option><option>Kaduna</option><option>Katsina</option><option>Jigawa</option><option>Kebbi</option><option>Sokoto</option><option>Zamfara</option></optgroup>
+        <optgroup label="North East"><option>Bauchi</option><option>Borno</option><option>Adamawa</option><option>Gombe</option><option>Yobe</option><option>Taraba</option></optgroup>
+      </select>
+      <label class="ob-label" id="ob-role-lbl">Your Profession</label>
+      <select class="ob-select" id="ob-role" onchange="validateOb1()"><option value="">— Select —</option></select>
+      <button class="ob-btn" id="ob-btn1" onclick="goStep2()" disabled>Continue →</button>
+    </div>
+    <div id="ob-s2" style="display:none;">
+      <div class="ob-title">Create your account</div>
+      <div class="ob-sub">Your data stays private. Always.</div>
+      <label class="ob-label">Email Address</label>
+      <input class="ob-input" id="ob-email" type="email" placeholder="yourname@email.com" oninput="validateOb2()">
+      <label class="ob-label">Password</label>
+      <input class="ob-input" id="ob-pass" type="password" placeholder="Min. 6 characters" oninput="validateOb2()">
+      <button class="ob-btn" id="ob-btn2" onclick="launchApp()" disabled>🚀 Enter HealthGuard AI</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN APP ═══════════════ -->
+<div class="screen hidden" id="s-app">
+  <div class="top-bar">
+    <div style="width:34px;height:34px;border-radius:10px;background:var(--teal3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1rem;">🛡️</div>
+    <div style="flex:1;">
+      <div style="font-size:0.65rem;color:var(--muted);" id="app-greet">Good morning 👋</div>
+      <div style="font-size:0.95rem;font-weight:700;" id="app-title">HealthGuard AI</div>
+    </div>
+    <span class="badge badge-teal" id="app-badge">Mode 02</span>
+  </div>
+  <div class="scroll-area app-content" id="appScroll">
+
+    <!-- WORKER CONTENT -->
+    <div id="wc">
+      <div class="section-label">Today's Health Weather</div>
+      <div class="weather-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+          <div style="display:flex;align-items:center;gap:0.6rem;"><span style="font-size:2rem;" id="wEmoji">☀️</span><div><div style="display:flex;align-items:baseline;gap:0.2rem;"><span style="font-size:1.5rem;font-weight:700;font-family:var(--mono);" id="wTemp">34</span><span style="font-size:0.75rem;color:var(--muted);">°C</span></div><div style="font-size:0.78rem;color:var(--muted2);" id="wDesc">Hot & Sunny</div></div></div>
+          <div style="text-align:right;"><div style="font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:0.2rem 0.6rem;border-radius:100px;background:var(--teal3);color:var(--teal2);border:1px solid var(--border2);margin-bottom:0.5rem;" id="wSeason">Harmattan</div><div style="font-size:0.65rem;color:var(--muted);" id="wLoc">📍 Nigeria</div></div>
+        </div>
+        <div id="wTips"></div>
+      </div>
+
+      <div class="section-label">Burnout Risk Score</div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.9rem;"><span style="font-size:0.88rem;font-weight:600;">Today's Risk Level</span><span style="font-size:0.68rem;color:var(--muted);">Updated now</span></div>
+        <div class="burn-ring-wrap">
+          <svg viewBox="0 0 88 88" width="88" height="88" style="transform:rotate(-90deg);"><circle class="ring-bg" cx="44" cy="44" r="36"/><circle class="ring-fill" id="burnRing" cx="44" cy="44" r="36" stroke="#22C55E" stroke-dasharray="226" stroke-dashoffset="158"/></svg>
+          <div class="score-num"><span class="score-n" id="burnScore">30</span><span class="score-l">/ 100</span></div>
+        </div>
+        <div class="burn-level" id="burnLabel" style="color:var(--green);">Low Risk ✓</div>
+        <div class="bar-row"><span class="bar-label">Exhaustion</span><div class="bar-track"><div class="bar-fill" id="bar-ex" style="width:28%;background:var(--green)"></div></div><span class="bar-val" id="bv-ex">28</span></div>
+        <div class="bar-row"><span class="bar-label">Depersonalisation</span><div class="bar-track"><div class="bar-fill" id="bar-dp" style="width:22%;background:var(--green)"></div></div><span class="bar-val" id="bv-dp">22</span></div>
+        <div class="bar-row"><span class="bar-label">Fulfilment</span><div class="bar-track"><div class="bar-fill" id="bar-fu" style="width:70%;background:var(--teal2)"></div></div><span class="bar-val" id="bv-fu">70</span></div>
+        <div style="margin-top:0.75rem;"><div style="font-size:0.72rem;color:var(--muted2);margin-bottom:0.4rem;">How exhausted do you feel right now?</div><input type="range" class="burn-slider" id="burnSlider" min="0" max="100" value="30" oninput="updateBurnout(this.value)"><div class="slider-labels"><span>No fatigue</span><span>Moderate</span><span>Exhausted</span></div></div>
+      </div>
+
+      <div class="section-label">Smart Documentation</div>
+      <div class="card">
+        <div style="margin-bottom:0.6rem;"><span class="doc-tag" onclick="loadTpl('soap',this)">SOAP Note</span><span class="doc-tag" onclick="loadTpl('referral',this)">Referral</span><span class="doc-tag" onclick="loadTpl('followup',this)">Follow-up</span><span class="doc-tag" onclick="loadTpl('discharge',this)">Discharge</span></div>
+        <textarea class="doc-area" id="docArea" rows="5">Select a template to auto-generate a documentation draft...</textarea>
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem;"><button class="doc-gen-btn" onclick="genDoc()">✦ Generate with AI</button><button class="doc-copy-btn" onclick="copyDoc()">📋 Copy</button></div>
+        <div id="copiedMsg" style="font-size:0.7rem;color:var(--green);margin-top:0.4rem;display:none;">✓ Copied!</div>
+      </div>
+
+      <div class="section-label">Schedule Assistant</div>
+      <div class="card">
+        <div style="font-size:0.78rem;color:var(--muted2);margin-bottom:0.75rem;">Today's shift — tap to mark complete</div>
+        <div id="schedList">
+          <div class="rem-item" onclick="toggleRem(this)"><div class="ri-check" style="background:var(--teal);border-color:var(--teal);color:white;">✓</div><div class="ri-info"><div class="ri-title">Ward round — Bay A & B</div><div class="ri-time">08:00 AM — 09:30 AM</div></div><span>🏥</span></div>
+          <div class="rem-item" onclick="toggleRem(this)"><div class="ri-check"></div><div class="ri-info"><div class="ri-title">Patient consultations</div><div class="ri-time">10:00 AM — 12:00 PM</div></div><span>🩺</span></div>
+          <div class="rem-item" onclick="toggleRem(this)"><div class="ri-check"></div><div class="ri-info"><div class="ri-title">Documentation & notes</div><div class="ri-time">12:30 PM — 1:00 PM</div></div><span>📋</span></div>
+          <div class="rem-item" onclick="toggleRem(this)"><div class="ri-check"></div><div class="ri-info"><div class="ri-title">Drug administration — Ward C</div><div class="ri-time">2:00 PM — 3:00 PM</div></div><span>💊</span></div>
+          <div class="rem-item" onclick="toggleRem(this)"><div class="ri-check"></div><div class="ri-info"><div class="ri-title">End of shift handover</div><div class="ri-time">3:30 PM</div></div><span>🤝</span></div>
+        </div>
+        <button class="add-btn" onclick="toggleForm('schedForm')">+ Add Schedule Item</button>
+        <div class="rem-form" id="schedForm">
+          <input class="rf-input" id="schedTitle" placeholder="e.g. Team briefing — ICU">
+          <div style="display:flex;gap:0.5rem;"><input class="rf-input" id="schedFrom" type="time" style="flex:1;"><input class="rf-input" id="schedTo" type="time" style="flex:1;"></div>
+          <div class="rf-row"><button class="rf-save" onclick="saveSchedule()">Save</button><button class="rf-cancel" onclick="toggleForm('schedForm')">Cancel</button></div>
+        </div>
+      </div>
+
+      <div class="section-label" id="workerRemSection">Today's Reminders</div>
+      <div id="wRemList">
+        <div class="rem-item" onclick="toggleRem(this)"><div class="ri-check" style="background:var(--teal);border-color:var(--teal);color:white;">✓</div><div class="ri-info"><div class="ri-title">Morning medications logged</div><div class="ri-time">08:00 AM</div></div><span>💊</span></div>
+        <div class="rem-item" onclick="toggleRem(this)"><div class="ri-check"></div><div class="ri-info"><div class="ri-title">Follow up — Patient Ade O.</div><div class="ri-time">11:30 AM</div></div><span>📋</span></div>
+        <div class="rem-item" onclick="toggleRem(this)"><div class="ri-check"></div><div class="ri-info"><div class="ri-title">Drink water — 500ml</div><div class="ri-time">Every 2 hours</div></div><span>💧</span></div>
+      </div>
+      <button class="add-btn" onclick="toggleForm('wRemForm')">+ Add Custom Reminder</button>
+      <div class="rem-form" id="wRemForm">
+        <input class="rf-input" id="wRemTitle" placeholder="Reminder title"><input class="rf-input" id="wRemTime" type="time">
+        <div class="rf-row"><button class="rf-save" onclick="saveRem('w')">Save</button><button class="rf-cancel" onclick="toggleForm('wRemForm')">Cancel</button></div>
+      </div>
+
+      <div class="section-label" id="workerHmoSection">HMO Awareness</div>
+      <div class="card">
+        <div style="font-size:0.72rem;color:var(--muted2);margin-bottom:0.6rem;">Select your state to see available health plans:</div>
+        <select class="hmo-dropdown" onchange="showHMO(this.value,'hr1','hn1','hd1','hl1')">
+          <option value="">— Select your state —</option>
+          <option value="federal">🇳🇬 Federal (NHIA / NHIS)</option>
+          <optgroup label="South West"><option value="lagos">Lagos — LASHMA</option><option value="oyo">Oyo — OYSHIA</option><option value="ogun">Ogun — OGSHIA</option><option value="osun">Osun — OHIS</option><option value="ondo">Ondo — ODSHIA</option><option value="ekiti">Ekiti — EKHIS</option></optgroup>
+          <optgroup label="South East"><option value="enugu">Enugu — ESUHCS</option><option value="anambra">Anambra — ASHIANG</option><option value="imo">Imo — IMSHIA</option><option value="abia">Abia — ABSHIA</option><option value="ebonyi">Ebonyi — EBSHIA</option></optgroup>
+          <optgroup label="South South"><option value="rivers">Rivers — RSHIA</option><option value="delta">Delta — DSCHC</option><option value="edo">Edo — EDHIC</option><option value="bayelsa">Bayelsa — BHIS</option><option value="akwaibom">Akwa Ibom — AKSHIA</option><option value="crossriver">Cross River — CRSHIA</option></optgroup>
+          <optgroup label="North Central"><option value="fct">FCT Abuja — FHIS</option><option value="kwara">Kwara — KWSHIS</option><option value="kogi">Kogi — KGSHIA</option><option value="benue">Benue — BNSHIA</option><option value="nasarawa">Nasarawa — NASHIA</option><option value="niger">Niger — NGSCHS</option><option value="plateau">Plateau — PLASHIA</option></optgroup>
+          <optgroup label="North West"><option value="kano">Kano — KSCHMA</option><option value="kaduna">Kaduna — KADCHMA</option><option value="katsina">Katsina — KTSCHMA</option><option value="jigawa">Jigawa — JICHMA</option><option value="kebbi">Kebbi — KECHEMA</option><option value="sokoto">Sokoto — SOSHIA</option><option value="zamfara">Zamfara — ZASHIA</option></optgroup>
+          <optgroup label="North East"><option value="bauchi">Bauchi — BASHCMA</option><option value="borno">Borno — BOSCHMA</option><option value="adamawa">Adamawa — ASCHMA</option><option value="gombe">Gombe — GMCHMA</option><option value="yobe">Yobe — YOSHIA</option><option value="taraba">Taraba — TASHIA</option></optgroup>
+        </select>
+        <div class="hmo-result" id="hr1"><div class="hmo-name" id="hn1"></div><div class="hmo-detail" id="hd1"></div><a class="hmo-link" id="hl1" href="#" target="_blank">→ Register / Learn more</a></div>
+      </div>
+
+      <div class="section-label">Scan-to-Connect</div>
+      <div class="stc-card">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+          <div style="width:42px;height:42px;border-radius:12px;background:var(--teal3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📲</div>
+          <div style="flex:1;"><div style="font-size:0.9rem;font-weight:700;color:var(--teal2);">Scan-to-Connect™</div><div style="font-size:0.68rem;color:var(--muted);">Real-time Patient Linking</div></div>
+          <span class="badge badge-amber">Coming Soon</span>
+        </div>
+        <div class="stc-feat"><span>🔗</span> Link with unlimited patients via one scan</div>
+        <div class="stc-feat"><span>🔔</span> Get notified when patients take or miss meds</div>
+        <div class="stc-feat"><span>📊</span> Automated follow-up tracking dashboard</div>
+      </div>
+
+      <div class="section-label">Daily Wellness Check-in</div>
+      <div class="card">
+        <div style="font-size:0.82rem;color:var(--muted2);margin-bottom:0.75rem;">How are you feeling as you start your shift today?</div>
+        <div class="mood-row">
+          <button class="mood-btn" onclick="selectMood(this,88)">😩</button>
+          <button class="mood-btn" onclick="selectMood(this,72)">😕</button>
+          <button class="mood-btn" onclick="selectMood(this,50)">😐</button>
+          <button class="mood-btn" onclick="selectMood(this,28)">🙂</button>
+          <button class="mood-btn" onclick="selectMood(this,15)">😄</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PATIENT CONTENT -->
+    <div id="pc" style="display:none;">
+      <div class="section-label">Today's Health Weather</div>
+      <div class="weather-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+          <div style="display:flex;align-items:center;gap:0.6rem;"><span style="font-size:2rem;" id="pEmoji">☀️</span><div><div style="display:flex;align-items:baseline;gap:0.2rem;"><span style="font-size:1.5rem;font-weight:700;font-family:var(--mono);" id="pTemp">34</span><span style="font-size:0.75rem;color:var(--muted);">°C</span></div><div style="font-size:0.78rem;color:var(--muted2);" id="pDesc">Hot & Sunny</div></div></div>
+          <div style="text-align:right;"><div style="font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:0.2rem 0.6rem;border-radius:100px;background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2);margin-bottom:0.5rem;" id="pSeason">Harmattan</div><div style="font-size:0.65rem;color:var(--muted);" id="pLoc">📍 Nigeria</div></div>
+        </div>
+        <div id="pTips"></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0;">
+          <div><div style="font-size:0.82rem;font-weight:500;">Caregiver Mode</div><div style="font-size:0.68rem;color:var(--muted);margin-top:0.1rem;">Managing health for a family member</div></div>
+          <div class="toggle-switch" onclick="this.classList.toggle('on');this.querySelector('.toggle-knob').style.transform=this.classList.contains('on')?'translateX(16px)':''"><div class="toggle-knob"></div></div>
+        </div>
+      </div>
+
+      <div class="section-label">Upcoming Appointments</div>
+      <div class="card" style="cursor:pointer;"><div style="display:flex;align-items:center;gap:0.75rem;"><div style="width:38px;height:38px;border-radius:11px;background:var(--teal3);display:flex;align-items:center;justify-content:center;">📅</div><div style="flex:1;"><div style="font-size:0.88rem;font-weight:600;">Antenatal Check-up</div><div style="font-size:0.72rem;color:var(--muted2);">Tomorrow · 10:00 AM · Adeoyo Hospital</div></div><span style="font-size:0.7rem;color:var(--teal2);font-weight:500;">Remind →</span></div></div>
+      <div class="card" style="cursor:pointer;"><div style="display:flex;align-items:center;gap:0.75rem;"><div style="width:38px;height:38px;border-radius:11px;background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;">🩺</div><div style="flex:1;"><div style="font-size:0.88rem;font-weight:600;">Blood Pressure Review</div><div style="font-size:0.72rem;color:var(--muted2);">Friday · 2:00 PM · PHC Ibadan</div></div><span style="font-size:0.7rem;color:var(--teal2);font-weight:500;">Remind →</span></div></div>
+
+      <div class="section-label" id="patRemSection">Medication Reminders</div>
+      <div id="pRemList">
+        <div class="rem-item" onclick="toggleRem(this)"><div class="ri-check" style="background:var(--teal);border-color:var(--teal);color:white;">✓</div><div class="ri-info"><div class="ri-title">Folic Acid — 1 tablet</div><div class="ri-time">Taken · 7:00 AM</div></div><span>💊</span></div>
+        <div class="rem-item" onclick="toggleRem(this)"><div class="ri-check"></div><div class="ri-info"><div class="ri-title">Multivitamin supplement</div><div class="ri-time">Due · 1:00 PM</div></div><span>🌿</span></div>
+        <div class="rem-item" onclick="toggleRem(this)"><div class="ri-check"></div><div class="ri-info"><div class="ri-title">Water intake — 2L</div><div class="ri-time">Daily target</div></div><span>💧</span></div>
+      </div>
+      <button class="add-btn" onclick="toggleForm('pRemForm')">+ Add Custom Reminder</button>
+      <div class="rem-form" id="pRemForm">
+        <input class="rf-input" id="pRemTitle" placeholder="e.g. Evening medication"><input class="rf-input" id="pRemTime" type="time">
+        <div class="rf-row"><button class="rf-save" onclick="saveRem('p')">Save</button><button class="rf-cancel" onclick="toggleForm('pRemForm')">Cancel</button></div>
+      </div>
+
+      <div class="section-label">Symptom Diary</div>
+      <div class="card">
+        <div style="font-size:0.78rem;color:var(--muted2);margin-bottom:0.6rem;">Log how you're feeling today:</div>
+        <textarea class="ob-input" id="symText" rows="3" placeholder="e.g. Mild headache since morning..." style="resize:none;margin-bottom:0.4rem;"></textarea>
+        <button onclick="saveSym()" style="padding:0.5rem 1rem;background:var(--teal);border:none;border-radius:8px;color:white;font-family:var(--font);font-size:0.78rem;font-weight:600;cursor:pointer;">Save Entry</button>
+        <div id="symSaved" style="font-size:0.72rem;color:var(--green);margin-top:0.4rem;display:none;">✓ Entry saved</div>
+        <div id="symLog" style="margin-top:0.75rem;"></div>
+      </div>
+
+      <div class="section-label">Nearest PHC / Clinic</div>
+      <div class="card">
+        <div id="phcStatus" style="font-size:0.75rem;color:var(--muted2);margin-bottom:0.6rem;">Tap below to find real health facilities near you.</div>
+        <button class="phc-btn" id="phcBtn" onclick="locatePHC()">📍 Find Nearest Facilities</button>
+        <div id="phcList"></div>
+      </div>
+
+      <div class="section-label" id="patHmoSection">Affordable Healthcare Plans</div>
+      <div class="card">
+        <div style="font-size:0.72rem;color:var(--muted2);margin-bottom:0.6rem;">Find health plans in your state:</div>
+        <select class="hmo-dropdown" onchange="showHMO(this.value,'hr2','hn2','hd2','hl2')">
+          <option value="">— Select your state —</option>
+          <option value="federal">🇳🇬 Federal (NHIA / NHIS)</option>
+          <optgroup label="South West"><option value="lagos">Lagos — LASHMA</option><option value="oyo">Oyo — OYSHIA</option><option value="ogun">Ogun — OGSHIA</option><option value="osun">Osun — OHIS</option><option value="ondo">Ondo — ODSHIA</option><option value="ekiti">Ekiti — EKHIS</option></optgroup>
+          <optgroup label="South East"><option value="enugu">Enugu — ESUHCS</option><option value="anambra">Anambra — ASHIANG</option><option value="imo">Imo — IMSHIA</option><option value="abia">Abia — ABSHIA</option><option value="ebonyi">Ebonyi — EBSHIA</option></optgroup>
+          <optgroup label="South South"><option value="rivers">Rivers — RSHIA</option><option value="delta">Delta — DSCHC</option><option value="edo">Edo — EDHIC</option><option value="bayelsa">Bayelsa — BHIS</option><option value="akwaibom">Akwa Ibom — AKSHIA</option><option value="crossriver">Cross River — CRSHIA</option></optgroup>
+          <optgroup label="North Central"><option value="fct">FCT Abuja — FHIS</option><option value="kwara">Kwara — KWSHIS</option><option value="kogi">Kogi — KGSHIA</option><option value="benue">Benue — BNSHIA</option><option value="nasarawa">Nasarawa — NASHIA</option><option value="niger">Niger — NGSCHS</option><option value="plateau">Plateau — PLASHIA</option></optgroup>
+          <optgroup label="North West"><option value="kano">Kano — KSCHMA</option><option value="kaduna">Kaduna — KADCHMA</option><option value="katsina">Katsina — KTSCHMA</option><option value="jigawa">Jigawa — JICHMA</option><option value="kebbi">Kebbi — KECHEMA</option><option value="sokoto">Sokoto — SOSHIA</option><option value="zamfara">Zamfara — ZASHIA</option></optgroup>
+          <optgroup label="North East"><option value="bauchi">Bauchi — BASHCMA</option><option value="borno">Borno — BOSCHMA</option><option value="adamawa">Adamawa — ASCHMA</option><option value="gombe">Gombe — GMCHMA</option><option value="yobe">Yobe — YOSHIA</option><option value="taraba">Taraba — TASHIA</option></optgroup>
+        </select>
+        <div class="hmo-result" id="hr2"><div class="hmo-name" id="hn2"></div><div class="hmo-detail" id="hd2"></div><a class="hmo-link" id="hl2" href="#" target="_blank">→ Register / Learn more</a></div>
+      </div>
+
+      <div class="section-label">Scan-to-Connect</div>
+      <div class="stc-card" style="border-color:rgba(34,197,94,0.25);">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+          <div style="width:42px;height:42px;border-radius:12px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📲</div>
+          <div style="flex:1;"><div style="font-size:0.9rem;font-weight:700;color:var(--green);">Scan-to-Connect™</div><div style="font-size:0.68rem;color:var(--muted);">Link with Your Healthcare Provider</div></div>
+          <span class="badge badge-amber">Coming Soon</span>
+        </div>
+        <div class="stc-feat"><span>🔗</span> Connect securely with your healthcare provider</div>
+        <div class="stc-feat"><span>💊</span> Receive medication reminders from your doctor</div>
+        <div class="stc-feat"><span>🔒</span> Your data stays private — you control who links</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="nb-home" onclick="navClick('home')"><span class="nav-icon">🏠</span><span class="nav-label">Home</span><div class="nav-dot"></div></button>
+    <button class="nav-btn" id="nb-rem" onclick="navClick('rem')"><span class="nav-icon">🔔</span><span class="nav-label">Reminders</span><div class="nav-dot"></div></button>
+    <button class="nav-btn" id="nb-hmo" onclick="navClick('hmo')"><span class="nav-icon">🏥</span><span class="nav-label">HMO</span><div class="nav-dot"></div></button>
+    <button class="nav-btn" id="nb-chat" onclick="goChat()"><span class="nav-icon">💬</span><span class="nav-label">AI Chat</span><div class="nav-dot"></div></button>
+    <button class="nav-btn" id="nb-profile" onclick="openPanel('profilePanel')"><span class="nav-icon">👤</span><span class="nav-label">Profile</span><div class="nav-dot"></div></button>
+  </div>
+</div>
+
+<!-- ═══════════════ CHAT ═══════════════ -->
+<div class="screen hidden" id="s-chat">
+  <div class="top-bar">
+    <button class="back-btn" onclick="closeChat()">←</button>
+    <div style="width:32px;height:32px;border-radius:9px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);display:flex;align-items:center;justify-content:center;font-size:0.9rem;">🛡️</div>
+    <div style="flex:1;"><div style="font-size:0.88rem;font-weight:700;">HealthGuard AI</div><div style="font-size:0.62rem;color:var(--green);">● Online</div></div>
+    <button onclick="openLiveAI()" style="display:flex;align-items:center;gap:0.35rem;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:8px;padding:0.3rem 0.6rem;cursor:pointer;">
+      <svg width="16" height="16" viewBox="0 0 22 22" fill="none"><rect x="2" y="8" width="2.5" height="6" rx="1.25" fill="#A78BFA"/><rect x="6" y="5" width="2.5" height="12" rx="1.25" fill="#A78BFA"/><rect x="10" y="3" width="2.5" height="16" rx="1.25" fill="#7C3AED"/><rect x="14" y="5" width="2.5" height="12" rx="1.25" fill="#A78BFA"/><rect x="18" y="8" width="2.5" height="6" rx="1.25" fill="#A78BFA"/></svg>
+      <span style="font-size:0.65rem;font-weight:700;color:var(--purple2);">Live AI</span>
+    </button>
+    <select class="lang-sel" id="chatLang">
+      <option value="english">🇳🇬 Nigerian English</option>
+      <option value="yoruba">🇳🇬 Yorùbá</option>
+      <option value="igbo">🇳🇬 Igbo</option>
+      <option value="hausa">🇳🇬 Hausa</option>
+      <option value="pidgin">🇳🇬 Naija Pidgin</option>
+    </select>
+  </div>
+  <div class="chat-msgs" id="chatMsgs">
+    <div class="msg-ai"><div class="ai-avatar">🛡️</div><div class="bubble-ai"><div class="bubble-text">Welcome to HealthGuard AI! 👋<br>I'm your personal health companion. Ask me anything about your health, HMO plans, burnout or wellness.<br><br>You can chat in <b>Nigerian English, Yorùbá, Igbo, Hausa or Naija Pidgin</b>.</div><div class="bubble-time-ai">HealthGuard AI · Just now</div></div></div>
+    <div class="chat-disclaimer">⚠️ General health information only. Not medical advice. Always consult a qualified healthcare professional.</div>
+  </div>
+  <div class="chat-bar">
+    <div class="chat-input-wrap">
+      <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask a health question..." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+      <button onclick="alert('Voice input in Nigerian languages — Coming Soon!')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;" title="Voice — Coming Soon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#8BBDB8"/><path d="M5 11a7 7 0 0 0 14 0" stroke="#8BBDB8" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="18" x2="12" y2="22" stroke="#8BBDB8" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="22" x2="16" y2="22" stroke="#8BBDB8" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <button class="chat-send" onclick="sendChat()">→</button>
+  </div>
+</div>
+
+<!-- ═══════════════ PROFILE PANEL ═══════════════ -->
+<div class="panel" id="profilePanel">
+  <div class="top-bar"><button class="back-btn" onclick="closePanel('profilePanel')">✕</button><div style="font-size:1rem;font-weight:700;flex:1;">My Profile</div></div>
+  <div class="panel-scroll">
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;padding:1rem;background:var(--card);border:1px solid var(--border);border-radius:16px;">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--teal3);border:2px solid var(--teal);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">👤</div>
+      <div><div style="font-size:1rem;font-weight:700;" id="profName">Promise Adeniyi</div><div style="font-size:0.72rem;color:var(--teal2);margin-top:0.15rem;" id="profRole">Healthcare Professional</div><div style="font-size:0.68rem;color:var(--muted);margin-top:0.1rem;" id="profState">📍 Nigeria</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.25rem;">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.85rem;text-align:center;"><div style="font-size:1.4rem;font-weight:700;color:var(--teal2);">7</div><div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem;">Days Active</div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.85rem;text-align:center;"><div style="font-size:1.4rem;font-weight:700;color:var(--green);">Low</div><div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem;">Burnout Risk</div></div>
+    </div>
+    <div class="panel-item" onclick="navClick('hmo');closePanel('profilePanel');"><span style="font-size:1.1rem;">🏥</span><span style="font-size:0.85rem;font-weight:500;">My HMO Plan</span><span style="margin-left:auto;color:var(--teal2);">→</span></div>
+    <div class="panel-item" onclick="navClick('rem');closePanel('profilePanel');"><span style="font-size:1.1rem;">🔔</span><span style="font-size:0.85rem;font-weight:500;">My Reminders</span><span style="margin-left:auto;color:var(--teal2);">→</span></div>
+    <div class="panel-item" onclick="openPanel('modePanel');closePanel('profilePanel');"><span style="font-size:1.1rem;">🔄</span><span style="font-size:0.85rem;font-weight:500;">Switch Mode</span><span style="margin-left:auto;color:var(--teal2);">→</span></div>
+    <div class="panel-item" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);" onclick="closePanel('profilePanel');goScreen('s-landing');"><span style="font-size:1.1rem;">🚪</span><span style="font-size:0.85rem;font-weight:500;color:var(--red);">Sign Out</span></div>
+  </div>
+</div>
+
+<!-- MODE PANEL -->
+<div class="panel" id="modePanel">
+  <div class="top-bar"><button class="back-btn" onclick="closePanel('modePanel')">✕</button><div style="font-size:1rem;font-weight:700;flex:1;">Switch Mode</div></div>
+  <div class="panel-scroll">
+    <div style="font-size:0.75rem;color:var(--muted2);margin-bottom:1.25rem;">Select how you want to use HealthGuard AI:</div>
+    <div class="mode-card sel" id="mc-w" onclick="switchMode('worker')"><span style="font-size:1.6rem;">🩺</span><div><div style="font-size:0.9rem;font-weight:700;">Mode 02 — Healthcare Professional</div><div style="font-size:0.7rem;color:var(--muted2);margin-top:0.1rem;">Burnout tracker, smart docs, HMO awareness</div></div><div class="mc-check" id="mcc-w">✓</div></div>
+    <div class="mode-card" id="mc-p" onclick="switchMode('patient')"><span style="font-size:1.6rem;">🙋</span><div><div style="font-size:0.9rem;font-weight:700;">Mode 03 — Patient / Client</div><div style="font-size:0.7rem;color:var(--muted2);margin-top:0.1rem;">Health tips, reminders, symptom diary</div></div><div class="mc-check" id="mcc-p"></div></div>
+    <div class="mode-card" style="opacity:0.5;cursor:default;"><span style="font-size:1.6rem;">🏥</span><div><div style="font-size:0.9rem;font-weight:700;">Mode 01 — Health Facility</div><div style="font-size:0.7rem;color:var(--muted2);margin-top:0.1rem;">Coming soon</div></div><span style="font-size:0.6rem;color:var(--amber);font-weight:700;margin-left:auto;">Soon</span></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let curSlide=0, curMode='worker', userState='Lagos', userName='Friend', prevScreen='s-landing';
+
+// ── SLIDES ──
+function showSlide(n){
+  document.querySelectorAll('.land-slide').forEach((s,i)=>{s.classList.toggle('active',i===n);s.classList.toggle('inactive',i!==n);});
+  ['d0','d1','d2','d3'].forEach((id,i)=>{const d=document.getElementById(id);d.classList.toggle('active',i===n);d.classList.toggle('inactive',i!==n);});
+  document.getElementById('prevBtn').classList.toggle('dim',n===0);
+  document.getElementById('nextBtn').classList.toggle('dim',n===3);
+  curSlide=n;
+}
+function nextSlide(){if(curSlide<3)showSlide(curSlide+1);}
+function prevSlide(){if(curSlide>0)showSlide(curSlide-1);}
+
+// Touch swipe
+let tx=0;
+document.getElementById('slideWrap').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
+document.getElementById('slideWrap').addEventListener('touchend',e=>{const d=tx-e.changedTouches[0].clientX;if(Math.abs(d)>40)d>0?nextSlide():prevSlide();},{passive:true});
+
+// ── SCREEN NAV ──
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// ── ONBOARDING ──
+function goOnboard(mode){
+  curMode=mode;
+  const isW=mode==='worker';
+  document.getElementById('ob-title').textContent=isW?'Healthcare Professional':'Patient / Client';
+  document.getElementById('ob-badge').textContent=isW?'Mode 02':'Mode 03';
+  document.getElementById('ob-badge').className='badge '+(isW?'badge-teal':'badge-green');
+  document.getElementById('ob-role-lbl').textContent=isW?'Your Profession':'Your Occupation';
+  const r=document.getElementById('ob-role');
+  if(isW){r.innerHTML='<option value="">— Select —</option><option>Doctor (MD / MBBS)</option><option>Nurse / Midwife</option><option>CHEW / CHO</option><option>Pharmacist</option><option>Medical Lab Scientist</option><option>Community Health Worker</option><option>Other Health Professional</option>';}
+  else{r.innerHTML='<option value="">— Select —</option><optgroup label="Informal Sector"><option>Market Trader / Seller</option><option>Farmer / Agricultural Worker</option><option>Driver (Bus / Taxi / Okada)</option><option>Artisan / Plumber / Electrician</option><option>Petty Trader / Hawker</option></optgroup><optgroup label="Formal Sector"><option>Civil Servant</option><option>Office Worker</option><option>Teacher / Educator</option></optgroup><optgroup label="Education"><option>Student (Secondary / Tertiary)</option><option>Apprentice / Intern</option></optgroup><optgroup label="Home & Care"><option>Caregiver (for family member)</option><option>Parent / Guardian</option><option>Elderly Individual (60+)</option></optgroup><optgroup label="Other"><option>Self-Employed / Freelancer</option><option>Other / Prefer not to say</option></optgroup>';}
+  document.getElementById('ob-s1').style.display='block';
+  document.getElementById('ob-s2').style.display='none';
+  prevScreen='s-landing';
+  goScreen('s-onboard');
+}
+function validateOb1(){const n=document.getElementById('ob-name').value.trim(),s=document.getElementById('ob-state').value,r=document.getElementById('ob-role').value;document.getElementById('ob-btn1').disabled=!(n&&s&&r);}
+function goStep2(){userName=document.getElementById('ob-name').value.trim().split(' ')[0];userState=document.getElementById('ob-state').value;document.getElementById('ob-s1').style.display='none';document.getElementById('ob-s2').style.display='block';}
+function validateOb2(){const e=document.getElementById('ob-email').value.trim(),p=document.getElementById('ob-pass').value;document.getElementById('ob-btn2').disabled=!(e&&p.length>=6);}
+function launchApp(){
+  const h=new Date().getHours(),g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  document.getElementById('app-greet').textContent=g+', '+userName+' 👋';
+  const isW=curMode==='worker';
+  document.getElementById('app-title').textContent=isW?'HealthGuard AI':'My Health';
+  document.getElementById('app-badge').textContent=isW?'Mode 02':'Mode 03';
+  document.getElementById('app-badge').className='badge '+(isW?'badge-teal':'badge-green');
+  document.getElementById('wc').style.display=isW?'block':'none';
+  document.getElementById('pc').style.display=isW?'none':'block';
+  document.getElementById('profName').textContent=document.getElementById('ob-name').value.trim();
+  document.getElementById('profRole').textContent=isW?'Healthcare Professional':'Patient / Client';
+  document.getElementById('profState').textContent='📍 '+userState+', Nigeria';
+  initWeather(userState);
+  prevScreen='s-app';
+  goScreen('s-app');
+}
+
+// ── BOTTOM NAV ──
+function navClick(sec){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nb-'+sec)?.classList.add('active');
+  if(sec==='home'){document.getElementById('appScroll').scrollTo({top:0,behavior:'smooth'});return;}
+  const map={rem:curMode==='worker'?'workerRemSection':'patRemSection',hmo:curMode==='worker'?'workerHmoSection':'patHmoSection'};
+  const el=document.getElementById(map[sec]);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── PANELS ──
+function openPanel(id){document.getElementById(id).classList.add('open');}
+function closePanel(id){document.getElementById(id).classList.remove('open');}
+
+// ── MODE SWITCH ──
+function switchMode(mode){
+  curMode=mode;const isW=mode==='worker';
+  ['w','p'].forEach(m=>{document.getElementById('mc-'+m).classList.toggle('sel',m===mode[0]);document.getElementById('mcc-'+m).textContent=m===mode[0]?'✓':'';});
+  document.getElementById('app-title').textContent=isW?'HealthGuard AI':'My Health';
+  document.getElementById('app-badge').textContent=isW?'Mode 02':'Mode 03';
+  document.getElementById('app-badge').className='badge '+(isW?'badge-teal':'badge-green');
+  document.getElementById('wc').style.display=isW?'block':'none';
+  document.getElementById('pc').style.display=isW?'none':'block';
+  closePanel('modePanel');
+}
+
+// ── BURNOUT ──
+function updateBurnout(v){
+  v=parseInt(v);
+  const off=226-(226*v/100),ring=document.getElementById('burnRing');
+  ring.style.strokeDashoffset=off;document.getElementById('burnScore').textContent=v;
+  const lbl=document.getElementById('burnLabel');
+  let c,t;
+  if(v<40){c='var(--green)';t='Low Risk ✓';ring.style.stroke='#22C55E';}
+  else if(v<70){c='var(--amber)';t='Moderate Risk ⚠';ring.style.stroke='#F59E0B';}
+  else{c='var(--red)';t='High Risk — Please seek support';ring.style.stroke='#EF4444';}
+  lbl.style.color=c;lbl.textContent=t;
+  const ex=Math.min(100,Math.round(v*0.9+Math.random()*5)),dp=Math.min(100,Math.round(v*0.7+Math.random()*5)),fu=Math.max(10,100-v);
+  document.getElementById('bar-ex').style.width=ex+'%';document.getElementById('bar-ex').style.background=v>=70?'var(--red)':v>=40?'var(--amber)':'var(--green)';document.getElementById('bv-ex').textContent=ex;
+  document.getElementById('bar-dp').style.width=dp+'%';document.getElementById('bv-dp').textContent=dp;
+  document.getElementById('bar-fu').style.width=fu+'%';document.getElementById('bv-fu').textContent=fu;
+}
+function selectMood(btn,score){
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('burnSlider').value=score;updateBurnout(score);
+  setTimeout(()=>{document.getElementById('burnLabel')?.scrollIntoView({behavior:'smooth',block:'center'});},300);
+}
+
+// ── REMINDERS ──
+function toggleRem(el){
+  el.classList.toggle('done');
+  const c=el.querySelector('.ri-check');
+  if(el.classList.contains('done')){c.textContent='✓';c.style.background='var(--teal)';c.style.borderColor='var(--teal)';c.style.color='white';}
+  else{c.textContent='';c.style.background='';c.style.borderColor='';c.style.color='';}
+}
+function toggleForm(id){document.getElementById(id).classList.toggle('show');}
+function fmtTime(t){if(!t)return'';const[h,m]=t.split(':').map(Number);return(h%12||12)+':'+(m<10?'0'+m:m)+' '+(h>=12?'PM':'AM');}
+function saveRem(mode){
+  const isW=mode==='w';const tId=isW?'wRemTitle':'pRemTitle';const tmId=isW?'wRemTime':'pRemTime';const lId=isW?'wRemList':'pRemList';const fId=isW?'wRemForm':'pRemForm';
+  const title=document.getElementById(tId).value.trim();if(!title)return;
+  const time=document.getElementById(tmId).value;
+  const item=document.createElement('div');item.className='rem-item';item.onclick=function(){toggleRem(this);};
+  item.innerHTML='<div class="ri-check"></div><div class="ri-info"><div class="ri-title">'+title+'</div><div class="ri-time">'+(time?fmtTime(time):'Custom reminder')+'</div></div><span>🔔</span>';
+  document.getElementById(lId).appendChild(item);
+  document.getElementById(tId).value='';document.getElementById(tmId).value='';document.getElementById(fId).classList.remove('show');
+}
+function saveSchedule(){
+  const t=document.getElementById('schedTitle').value.trim();if(!t)return;
+  const f=document.getElementById('schedFrom').value,to=document.getElementById('schedTo').value;
+  const ts=f&&to?fmtTime(f)+' — '+fmtTime(to):f?fmtTime(f):'Scheduled';
+  const item=document.createElement('div');item.className='rem-item';item.onclick=function(){toggleRem(this);};
+  item.innerHTML='<div class="ri-check"></div><div class="ri-info"><div class="ri-title">'+t+'</div><div class="ri-time">'+ts+'</div></div><span>📅</span>';
+  document.getElementById('schedList').appendChild(item);
+  document.getElementById('schedTitle').value='';document.getElementById('schedFrom').value='';document.getElementById('schedTo').value='';
+  document.getElementById('schedForm').classList.remove('show');
+}
+
+// ── SMART DOC ──
+const tpls={soap:'S: Patient presents with complaints of...\nO: Vitals — BP: /mmHg, Temp: °C, PR: bpm, RR: /min\nA: Assessment — [diagnosis]\nP: Plan — [treatment / referral / follow-up]',referral:'Referral Note\nDate: '+new Date().toLocaleDateString()+'\nPatient: [Name / ID]\nReferred to: [Specialist / Facility]\nReason for referral:\nClinical summary:\nCurrent medications:',followup:'Follow-up Note\nPatient: [Name]\nLast visit: [Date]\nProgress since last visit:\nCurrent complaints:\nPlan for next visit:',discharge:'Discharge Summary\nPatient: [Name] · Date: '+new Date().toLocaleDateString()+'\nAdmission diagnosis:\nProcedures performed:\nDischarge medications:\nFollow-up instructions:\nReturn if:'};
+let activeTpl='';
+function loadTpl(t,el){activeTpl=t;document.querySelectorAll('.doc-tag').forEach(d=>d.classList.remove('active'));el.classList.add('active');}
+function genDoc(){const a=document.getElementById('docArea');if(!activeTpl){a.value='⚠ Please select a template first.';return;}a.value='Generating...';setTimeout(()=>{a.value=tpls[activeTpl];},600);}
+function copyDoc(){const a=document.getElementById('docArea');if(!a.value||a.value.includes('Select a')||a.value.includes('Generating'))return;navigator.clipboard?.writeText(a.value).catch(()=>{a.select();document.execCommand('copy');});const m=document.getElementById('copiedMsg');m.style.display='block';setTimeout(()=>m.style.display='none',2000);}
+
+// ── SYMPTOM ──
+function saveSym(){const t=document.getElementById('symText').value.trim();if(!t)return;const now=new Date();const ts=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' · '+now.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});const log=document.getElementById('symLog');const e=document.createElement('div');e.style.cssText='background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:0.6rem 0.75rem;margin-bottom:0.4rem;';e.innerHTML='<div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.2rem;">'+ts+'</div><div style="font-size:0.78rem;">'+t+'</div>';log.insertBefore(e,log.firstChild);document.getElementById('symText').value='';const s=document.getElementById('symSaved');s.style.display='block';setTimeout(()=>s.style.display='none',2500);}
+
+// ── PHC ──
+function locatePHC(){
+  const btn=document.getElementById('phcBtn'),st=document.getElementById('phcStatus'),ls=document.getElementById('phcList');
+  if(!navigator.geolocation){st.textContent='⚠ Location not supported.';return;}
+  btn.textContent='⏳ Locating...';btn.disabled=true;st.textContent='Getting your location...';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const{latitude:la,longitude:lo}=pos.coords;st.textContent='📡 Searching nearby facilities...';
+    const q=`[out:json][timeout:25];(node["amenity"~"hospital|clinic|health_post|doctors|pharmacy"](around:5000,${la},${lo});way["amenity"~"hospital|clinic|health_post|doctors|pharmacy"](around:5000,${la},${lo}););out center 10;`;
+    fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)})
+    .then(r=>r.json()).then(d=>{
+      ls.innerHTML='';const els=d.elements||[];
+      if(!els.length){st.textContent='⚠ No facilities found within 5km.';btn.textContent='🔄 Try Again';btn.disabled=false;return;}
+      st.textContent='✅ Found '+Math.min(els.length,8)+' facilities near you:';btn.style.display='none';
+      els.slice(0,8).forEach(el=>{
+        const eLa=el.lat||el.center?.lat,eLo=el.lon||el.center?.lon;
+        const nm=el.tags?.name||'Health Facility',ty=el.tags?.amenity||'clinic';
+        const em=ty==='hospital'?'🏥':ty==='pharmacy'?'💊':'🏨';
+        let dist='';if(eLa&&eLo){const dk=dKm(la,lo,eLa,eLo);dist=dk<1?(dk*1000).toFixed(0)+'m':dk.toFixed(1)+'km';}
+        const it=document.createElement('div');it.className='phc-item';
+        it.innerHTML=em+' <span>'+nm+'</span><span class="phc-dist">'+dist+'</span>';
+        it.onclick=()=>window.open('https://www.openstreetmap.org/?mlat='+eLa+'&mlon='+eLo+'&zoom=17','_blank');
+        ls.appendChild(it);
+      });
+    }).catch(()=>{st.textContent='⚠ Could not load. Check internet.';btn.textContent='🔄 Try Again';btn.disabled=false;});
+  },()=>{st.textContent='⚠ Location denied. Please allow location access.';btn.textContent='📍 Try Again';btn.disabled=false;},{timeout:10000});
+}
+function dKm(la1,lo1,la2,lo2){const R=6371,dL=(la2-la1)*Math.PI/180,dl=(lo2-lo1)*Math.PI/180,a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dl/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+
+// ── HMO ──
+const hmo={federal:{n:'NHIA / NHIS — National Health Insurance Authority',d:'Federal scheme open to all Nigerians · nhia.gov.ng',u:'https://www.nhia.gov.ng/'},lagos:{n:'LASHMA — Lagos State Health Management Agency',d:'Scheme: Ilera Eko · Covers consultations, drugs, tests & admissions · lashma.com',u:'https://lashma.com/'},oyo:{n:'OYSHIA — Oyo State Health Insurance Agency',d:'Annual premium from ₦18,000/year · oyshia.oy.gov.ng',u:'https://oyshia.oy.gov.ng/'},ogun:{n:'OGSHIA — Ogun State Health Insurance Agency',d:'Covers inpatient, outpatient, dental, maternity & eye care · ogshia.org',u:'https://ogshia.org/'},osun:{n:'OHIS — Osun Health Insurance Scheme',d:'Covers outpatient & inpatient care · oshia.ng',u:'https://oshia.ng/'},ondo:{n:'ODSHIA — Ondo State Health Insurance Agency',d:'Primary to secondary care coverage',u:'https://www.nhia.gov.ng/sshias/'},ekiti:{n:'EKHIS — Ekiti State Health Insurance Scheme',d:'Outpatient & inpatient coverage',u:'https://www.nhia.gov.ng/sshias/'},enugu:{n:'ESUHCS — Enugu State Universal Health Coverage Scheme',d:'esauhc.org',u:'https://esauhc.org/'},anambra:{n:'ASHIANG — Anambra State Health Insurance Agency',d:'ashiang.org',u:'https://www.ashiang.org/'},imo:{n:'IMSHIA — Imo State Health Insurance Agency',d:'imshiaonline.com',u:'https://imshiaonline.com/'},abia:{n:'ABSHIA — Abia State Health Insurance Agency',d:'abshiaportal.com',u:'https://abshiaportal.com/'},ebonyi:{n:'EBSHIA — Ebonyi State Health Insurance Agency',d:'ebshia.eb.gov.ng',u:'https://www.ebshia.eb.gov.ng/'},rivers:{n:'RSHIA — Rivers State Health Insurance Agency',d:'Comprehensive healthcare for Rivers residents',u:'https://www.nhia.gov.ng/sshias/'},delta:{n:'DSCHC — Delta State Contributory Health Commission',d:'Over 2.5M enrollees · dschc.org.ng',u:'https://dschc.org.ng/'},edo:{n:'EDHIC — Edo State Health Insurance Commission',d:'edhic.org',u:'https://edhic.org/'},bayelsa:{n:'BHIS — Bayelsa Health Insurance Scheme',d:'bhis.by.gov.ng',u:'https://bhis.by.gov.ng/'},akwaibom:{n:'AKSHIA — Akwa Ibom State Health Insurance Agency',d:'Outpatient & inpatient coverage',u:'https://www.nhia.gov.ng/sshias/'},crossriver:{n:'CRSHIA — Cross River State Health Insurance Agency',d:'Primary & secondary healthcare',u:'https://www.nhia.gov.ng/sshias/'},fct:{n:'FHIS — FCT Health Insurance Scheme',d:'Over 850,000 enrollees · fhis.abj.gov.ng',u:'https://fhis.abj.gov.ng/'},kwara:{n:'KWSHIS — Kwara State Health Insurance Agency',d:'kwaracare.com.ng',u:'https://kwaracare.com.ng/'},kogi:{n:'KGSHIA — Kogi State Health Insurance Agency',d:'kgshia.ng',u:'https://kgshia.ng/'},benue:{n:'BNSHIA — Benue State Health Insurance Agency',d:'bnshia.be.gov.ng',u:'https://bnshia.be.gov.ng/'},nasarawa:{n:'NASHIA — Nasarawa State Health Insurance Agency',d:'nashiaportal.com',u:'http://nashiaportal.com/'},niger:{n:'NGSCHS — Niger State Contributory Health Scheme',d:'Primary to secondary care',u:'https://www.nhia.gov.ng/sshias/'},plateau:{n:'PLASHIA — Plateau State Health Insurance Agency',d:'Healthcare for all Plateau residents',u:'https://www.nhia.gov.ng/sshias/'},kano:{n:'KSCHMA — Kano State Contributory Healthcare Scheme',d:'Over 1.19M enrollees · kschma.kn.gov.ng',u:'https://kschma.kn.gov.ng/'},kaduna:{n:'KADCHMA — Kaduna State Contributory Health Management Scheme',d:'Over 952,000 enrollees · kadchma.kd.gov.ng',u:'https://www.kadchma.kd.gov.ng/'},katsina:{n:'KTSCHMA — Katsina State Contributory Healthcare Management Agency',d:'Over 693,000 enrollees · ktschma.agency',u:'https://ktschma.agency/'},jigawa:{n:'JICHMA — Jigawa State Contributory Healthcare Management Agency',d:'Over 439,000 enrollees · jichma.jg.gov.ng',u:'https://jichma.jg.gov.ng/'},kebbi:{n:'KECHEMA — Kebbi State Contributory Healthcare Management Agency',d:'kechema.gov.ng',u:'http://kechema.gov.ng/'},sokoto:{n:'SOSHIA — Sokoto State Health Insurance Agency',d:'Primary & secondary care coverage',u:'https://www.nhia.gov.ng/sshias/'},zamfara:{n:'ZASHIA — Zamfara State Health Insurance Agency',d:'Healthcare for Zamfara residents',u:'https://www.nhia.gov.ng/sshias/'},bauchi:{n:'BASHCMA — Bauchi State Health Contributory Management Agency',d:'Over 344,000 enrollees · bashcma.com',u:'https://bashcma.com/'},borno:{n:'BOSCHMA — Borno State Contributory Healthcare Management Agency',d:'boschma.bo.gov.ng',u:'https://boschma.bo.gov.ng/'},adamawa:{n:'ASCHMA — Adamawa State Contributory Health Management Agency',d:'aschma.org',u:'https://aschma.org/'},gombe:{n:'GMCHMA — Gombe State Contributory Healthcare Management Agency',d:'gmchma.gm.gov.ng',u:'https://gmchma.gm.gov.ng/'},yobe:{n:'YOSHIA — Yobe State Health Insurance Agency',d:'Over 340,000 enrollees',u:'https://www.nhia.gov.ng/sshias/'},taraba:{n:'TASHIA — Taraba State Health Insurance Agency',d:'Healthcare for Taraba residents',u:'https://www.nhia.gov.ng/sshias/'}};
+function showHMO(v,rId,nId,dId,lId){const r=document.getElementById(rId);if(!v){r.classList.remove('show');return;}const d=hmo[v];if(!d)return;document.getElementById(nId).textContent=d.n;document.getElementById(dId).textContent=d.d;const l=document.getElementById(lId);l.href=d.u;l.target='_blank';r.classList.add('show');}
+
+// ── WEATHER ──
+function initWeather(state){
+  const mo=new Date().getMonth()+1,hr=new Date().getHours();
+  const isN=['Kano','Kaduna','Katsina','Jigawa','Kebbi','Sokoto','Zamfara','Bauchi','Borno','Adamawa','Gombe','Yobe','Taraba'].includes(state);
+  let em,tp,dc,sn,tips;
+  if(mo>=11||mo<=3){
+    sn='Harmattan Season';em=hr>=6&&hr<=10?'🌤️':'☀️';tp=isN?hr<=10?18:36:hr<=10?23:32;dc=hr<=10?'Cool & Dusty':'Hot & Hazy';
+    tips=[{i:'💧',t:'Drink at least 2–3 litres of water — dehydration sneaks up fast in Harmattan.'},{i:'😷',t:'Wear a face mask outdoors to protect against dust.'},{i:'🧴',t:'Moisturise your skin and lips — the dry air causes cracking.'},{i:'🍊',t:'Boost Vitamin C intake to strengthen immunity this season.'}];
+  }else{
+    sn='Rainy Season';em='🌧️';tp=isN?27:29;dc='Humid & Rainy';
+    tips=[{i:'🦟',t:'Use mosquito repellent and sleep under treated nets.'},{i:'🧼',t:'Wash hands frequently — cholera spreads through contaminated water.'},{i:'🚰',t:'Only drink boiled or purified water during rainy season.'},{i:'🌿',t:'Eat Vitamin C-rich fruits — oranges, pineapple, pawpaw.'}];
+  }
+  const tipsHtml=tips.map(t=>'<div class="weather-tip"><span>'+t.i+'</span><span>'+t.t+'</span></div>').join('');
+  const setIds=(eI,tI,dI,sI,lI,tipsI)=>{
+    const el=id=>document.getElementById(id);
+    if(el(eI))el(eI).textContent=em;if(el(tI))el(tI).textContent=tp;if(el(dI))el(dI).textContent=dc;
+    if(el(sI))el(sI).textContent=sn;if(el(lI))el(lI).textContent='📍 '+state+', Nigeria';if(el(tipsI))el(tipsI).innerHTML=tipsHtml;
+  };
+  setIds('wEmoji','wTemp','wDesc','wSeason','wLoc','wTips');
+  setIds('pEmoji','pTemp','pDesc','pSeason','pLoc','pTips');
+}
+initWeather('Lagos');
+
+// ── CHAT ──
+function goChat(){prevScreen=document.querySelector('.screen:not(.hidden)')?.id||'s-landing';goScreen('s-chat');}
+function closeChat(){goScreen(prevScreen==='s-app'?'s-app':'s-landing');}
+
+const langSys={english:'Respond in Nigerian English — warm, friendly and culturally aware of Nigerian context.',yoruba:'Respond ONLY in Yorùbá as naturally spoken in Nigeria. Use authentic Yorùbá with greetings like "Ẹ káàbọ̀". No English except medical terms.',igbo:'Respond ONLY in Igbo as naturally spoken in Nigeria. Greet with "Ndewo". No English except medical terms.',hausa:'Respond ONLY in Hausa as naturally spoken in Northern Nigeria. Greet with "Sannu". No English except medical terms.',pidgin:'Respond ONLY in Nigerian Pidgin. Use "wetin","how far","no wahala","abeg","oga","na so e be". Sound like a real Nigerian.'};
+
+async function sendChat(){
+  const inp=document.getElementById('chatInput');const msg=inp.value.trim();if(!msg)return;
+  const lang=document.getElementById('chatLang').value;const msgs=document.getElementById('chatMsgs');
+  const uDiv=document.createElement('div');uDiv.className='msg-user';
+  uDiv.innerHTML='<div class="bubble-user"><div class="bubble-text">'+msg+'</div><div class="bubble-time">You · Just now</div></div>';
+  msgs.appendChild(uDiv);inp.value='';inp.style.height='auto';msgs.scrollTop=msgs.scrollHeight;
+  const tDiv=document.createElement('div');tDiv.className='msg-ai';tDiv.id='typing';
+  tDiv.innerHTML='<div class="ai-avatar">🛡️</div><div class="bubble-ai"><div class="bubble-text" style="color:var(--muted2);">Thinking...</div></div>';
+  msgs.appendChild(tDiv);msgs.scrollTop=msgs.scrollHeight;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'You are HealthGuard AI, a friendly and knowledgeable personal health companion built for Nigerians. You help with health questions, HMO plans, burnout support and wellness guidance. '+langSys[lang]+' Keep responses concise and warm. End with a brief reminder this is general information, not medical advice.',messages:[{role:'user',content:msg}]})});
+    const data=await res.json();const reply=data.content?.[0]?.text||'I could not process that. Please try again.';
+    document.getElementById('typing')?.remove();
+    const aDiv=document.createElement('div');aDiv.className='msg-ai';
+    aDiv.innerHTML='<div class="ai-avatar">🛡️</div><div class="bubble-ai"><div class="bubble-text">'+reply.replace(/\n/g,'<br>')+'</div><div class="bubble-time-ai">HealthGuard AI · Just now</div></div>';
+    msgs.appendChild(aDiv);msgs.scrollTop=msgs.scrollHeight;
+  }catch(e){
+    document.getElementById('typing')?.remove();
+    const eDiv=document.createElement('div');eDiv.className='msg-ai';
+    eDiv.innerHTML='<div class="ai-avatar">🛡️</div><div class="bubble-ai"><div class="bubble-text" style="color:var(--muted2);">Sorry, I could not connect. Please check your internet and try again.</div></div>';
+    msgs.appendChild(eDiv);msgs.scrollTop=msgs.scrollHeight;
+function openLiveAI(){openPanel('liveAIPanel');}
+</script>
+
+<!-- LIVE AI PANEL -->
+<div class="panel" id="liveAIPanel">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;background:radial-gradient(ellipse at center,rgba(124,58,237,0.15) 0%,var(--bg2) 70%);overflow-y:auto;">
+    <div style="width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,0.6) 0%,rgba(124,58,237,0.3) 50%,rgba(124,58,237,0.05) 100%);display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;animation:orbPulse 2s infinite;">
+      <div style="font-size:2.5rem;">🛡️</div>
+    </div>
+    <div style="font-size:1.2rem;font-weight:800;color:var(--purple2);margin-bottom:0.5rem;">HealthGuard Live AI</div>
+    <div style="font-size:0.75rem;color:var(--muted2);text-align:center;line-height:1.6;margin-bottom:1.5rem;max-width:280px;">Real-time voice conversation in your language. Speak naturally — HealthGuard AI listens, understands and responds.</div>
+    <div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:0.85rem 1.5rem;margin-bottom:1.5rem;text-align:center;width:100%;max-width:300px;">
+      <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--amber);margin-bottom:0.35rem;">Coming Soon</div>
+      <div style="font-size:0.72rem;color:var(--muted2);line-height:1.5;">Live voice + video AI in Yorùbá,<br>Igbo, Hausa & Naija Pidgin</div>
+    </div>
+    <div style="width:100%;max-width:300px;display:flex;flex-direction:column;gap:0.6rem;margin-bottom:2rem;">
+      <div style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:10px;"><span style="font-size:1.1rem;">🎙️</span><div><div style="font-size:0.78rem;font-weight:600;color:var(--purple2);">Voice Conversation</div><div style="font-size:0.65rem;color:var(--muted2);">Speak in your language, get instant responses</div></div></div>
+      <div style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:10px;"><span style="font-size:1.1rem;">📸</span><div><div style="font-size:0.78rem;font-weight:600;color:var(--purple2);">Visual First Aid</div><div style="font-size:0.65rem;color:var(--muted2);">Point camera at injury — AI guides you</div></div></div>
+      <div style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:10px;"><span style="font-size:1.1rem;">📱</span><div><div style="font-size:0.78rem;font-weight:600;color:var(--purple2);">Screen Share</div><div style="font-size:0.65rem;color:var(--muted2);">Share your screen for guided assistance</div></div></div>
+      <div style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:10px;"><span style="font-size:1.1rem;">🎥</span><div><div style="font-size:0.78rem;font-weight:600;color:var(--purple2);">Video Consultation</div><div style="font-size:0.65rem;color:var(--muted2);">Face-to-face AI health consultation</div></div></div>
+    </div>
+    <button onclick="closePanel('liveAIPanel')" style="width:100%;max-width:300px;padding:0.75rem;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:12px;color:var(--purple2);font-family:var(--font);font-size:0.85rem;font-weight:600;cursor:pointer;">← Back to Chat</button>
+  </div>
+</div>
+
+<style>
+@keyframes orbPulse{0%,100%{box-shadow:0 0 40px rgba(124,58,237,0.4),0 0 80px rgba(124,58,237,0.2);}50%{box-shadow:0 0 60px rgba(124,58,237,0.7),0 0 120px rgba(124,58,237,0.35);}}
+</style>
+</body>
+</html>
