@@ -411,11 +411,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
  <svg viewBox="0 0 88 88" width="88" height="88" style="transform:rotate(-90deg);"><circle class="ring-bg" cx="44" cy="44" r="36"/><circle class="ring-fill" id="burnRing" cx="44" cy="44" r="36" stroke="#22C55E" stroke-dasharray="226" stroke-dashoffset="158"/></svg>
  <div class="score-num"><span class="score-n" id="burnScore">30</span><span class="score-l">/ 100</span></div>
  </div>
- <div class="burn-level" id="burnLabel" style="color:var(--green);">Low Risk </div>
- <div class="bar-row"><span class="bar-label">Exhaustion</span><div class="bar-track"><div class="bar-fill" id="bar-ex" style="width:28%;background:var(--green)"></div></div><span class="bar-val" id="bv-ex">28</span></div>
- <div class="bar-row"><span class="bar-label">Depersonalisation</span><div class="bar-track"><div class="bar-fill" id="bar-dp" style="width:22%;background:var(--green)"></div></div><span class="bar-val" id="bv-dp">22</span></div>
- <div class="bar-row"><span class="bar-label">Fulfilment</span><div class="bar-track"><div class="bar-fill" id="bar-fu" style="width:70%;background:var(--teal2)"></div></div><span class="bar-val" id="bv-fu">70</span></div>
- <div style="margin-top:0.75rem;"><div style="font-size:0.72rem;color:var(--muted2);margin-bottom:0.4rem;">How exhausted do you feel right now?</div><input type="range" class="burn-slider" id="burnSlider" min="0" max="100" value="30" oninput="updateBurnout(this.value)"><div class="slider-labels"><span>No fatigue</span><span>Moderate</span><span>Exhausted</span></div></div>
+ <div class="burn-level" id="burnLabel" style="color:var(--green);">No data yet</div>
+ <div class="bar-row"><span class="bar-label">PHQ-9</span><div class="bar-track"><div class="bar-fill" id="bar-ex" style="width:0%;background:var(--green)"></div></div><span class="bar-val" id="bv-ex">—</span></div>
+ <div class="bar-row"><span class="bar-label">PSS-10</span><div class="bar-track"><div class="bar-fill" id="bar-dp" style="width:0%;background:var(--green)"></div></div><span class="bar-val" id="bv-dp">—</span></div>
+ <div class="bar-row"><span class="bar-label">GAD-7</span><div class="bar-track"><div class="bar-fill" id="bar-fu" style="width:0%;background:var(--teal2)"></div></div><span class="bar-val" id="bv-fu">—</span></div>
+ <div id="burnTrendWrap" style="display:none;"><div class="ba-trend-mini" id="burnTrendBadge"></div></div>
+ <button class="ba-cta-btn" id="burnCTA" onclick="openBurnoutAssess()">Take Weekly Check-in →</button>
+ <div class="ba-last-date" id="burnLastDate">No assessment yet — take your first check-in</div>
  </div>
 
  <div class="section-label">Smart Documentation</div>
@@ -713,6 +715,7 @@ function launchApp(){
  initWeather(userState);
  prevScreen='s-app';
  goScreen('s-app');
+ setTimeout(loadBurnoutDashboard,300);
 }
 
 // ── BOTTOM NAV ──
@@ -743,24 +746,24 @@ function switchMode(mode){
 
 // ── BURNOUT ──
 function updateBurnout(v){
+ // Now driven by assessment data — kept for legacy mood fallback
  v=parseInt(v);
- const off=226-(226*v/100),ring=document.getElementById('burnRing');
- ring.style.strokeDashoffset=off;document.getElementById('burnScore').textContent=v;
+ const ring=document.getElementById('burnRing');
+ if(!ring)return;
+ ring.style.strokeDashoffset=String(226-(226*v/100));
+ document.getElementById('burnScore').textContent=v;
  const lbl=document.getElementById('burnLabel');
  let c,t;
- if(v<40){c='var(--green)';t='Low Risk ';ring.style.stroke='#22C55E';}
- else if(v<70){c='var(--amber)';t='Moderate Risk ';ring.style.stroke='#F59E0B';}
- else{c='var(--red)';t='High Risk — Please seek support';ring.style.stroke='#EF4444';}
+ if(v<40){c='var(--green)';t='🟢 Low Risk';ring.style.stroke='#22C55E';}
+ else if(v<70){c='var(--amber)';t='🟡 Moderate Risk';ring.style.stroke='#F59E0B';}
+ else{c='var(--red)';t='🔴 High Risk — Please seek support';ring.style.stroke='#EF4444';}
  lbl.style.color=c;lbl.textContent=t;
- const ex=Math.min(100,Math.round(v*0.9+Math.random()*5)),dp=Math.min(100,Math.round(v*0.7+Math.random()*5)),fu=Math.max(10,100-v);
- document.getElementById('bar-ex').style.width=ex+'%';document.getElementById('bar-ex').style.background=v>=70?'var(--red)':v>=40?'var(--amber)':'var(--green)';document.getElementById('bv-ex').textContent=ex;
- document.getElementById('bar-dp').style.width=dp+'%';document.getElementById('bv-dp').textContent=dp;
- document.getElementById('bar-fu').style.width=fu+'%';document.getElementById('bv-fu').textContent=fu;
 }
 function selectMood(btn,score){
  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));
  btn.classList.add('selected');
- document.getElementById('burnSlider').value=score;updateBurnout(score);
+ // Only update visual — real score comes from weekly assessment
+ updateBurnout(score);
  setTimeout(()=>{document.getElementById('burnLabel')?.scrollIntoView({behavior:'smooth',block:'center'});},300);
 }
 
@@ -888,6 +891,317 @@ async function sendChat(){
  }
 }
 function openLiveAI(){openPanel('liveAIPanel');}
+
+// ══════════════════════════════════════════════
+//  BURNOUT ENGINE — PHQ-9 + PSS-10 + GAD-7
+// ══════════════════════════════════════════════
+const BE = (function(){
+ const PHQ9 = {
+  id:'phq9', name:'PHQ-9', maxScore:27,
+  prompt:'Over the last 7 days, how often have you been bothered by the following?',
+  scale:[{l:'Not at all',v:0},{l:'Several days',v:1},{l:'More than half the days',v:2},{l:'Nearly every day',v:3}],
+  questions:[
+   {id:'phq1',t:'Little interest or pleasure in doing things'},
+   {id:'phq2',t:'Feeling down, depressed, or hopeless'},
+   {id:'phq3',t:'Trouble falling or staying asleep, or sleeping too much'},
+   {id:'phq4',t:'Feeling tired or having little energy'},
+   {id:'phq5',t:'Poor appetite or overeating'},
+   {id:'phq6',t:'Feeling bad about yourself — or that you are a failure or have let yourself or your family down'},
+   {id:'phq7',t:'Trouble concentrating on things, such as reading or your work'},
+   {id:'phq8',t:'Moving or speaking slowly — or being so fidgety or restless you have been moving around more than usual'},
+   {id:'phq9',t:'Thoughts that you would be better off dead, or of hurting yourself in some way', safety:true}
+  ]
+ };
+ const PSS10 = {
+  id:'pss10', name:'PSS-10', maxScore:40,
+  prompt:'In the last 7 days, how often have you felt or thought the following?',
+  scale:[{l:'Never',v:0},{l:'Almost never',v:1},{l:'Sometimes',v:2},{l:'Fairly often',v:3},{l:'Very often',v:4}],
+  questions:[
+   {id:'pss1', t:'Been upset because of something that happened unexpectedly?',  rev:false},
+   {id:'pss2', t:'Felt unable to control the important things in your life?',     rev:false},
+   {id:'pss3', t:'Felt nervous and stressed?',                                    rev:false},
+   {id:'pss4', t:'Felt confident in your ability to handle personal problems?',   rev:true},
+   {id:'pss5', t:'Felt that things were going your way?',                         rev:true},
+   {id:'pss6', t:'Found that you could not cope with all the things you had to do?', rev:false},
+   {id:'pss7', t:'Been able to control irritations in your life?',                rev:true},
+   {id:'pss8', t:'Felt that you were on top of things?',                          rev:true},
+   {id:'pss9', t:'Been angered by things that were outside of your control?',     rev:false},
+   {id:'pss10',t:'Felt difficulties were piling up so high that you could not overcome them?', rev:false}
+  ]
+ };
+ const GAD7 = {
+  id:'gad7', name:'GAD-7', maxScore:21,
+  prompt:'Over the last 7 days, how often have you been bothered by the following?',
+  scale:[{l:'Not at all',v:0},{l:'Several days',v:1},{l:'More than half the days',v:2},{l:'Nearly every day',v:3}],
+  questions:[
+   {id:'gad1',t:'Feeling nervous, anxious, or on edge'},
+   {id:'gad2',t:'Not being able to stop or control worrying'},
+   {id:'gad3',t:'Worrying too much about different things'},
+   {id:'gad4',t:'Trouble relaxing'},
+   {id:'gad5',t:'Being so restless that it is hard to sit still'},
+   {id:'gad6',t:'Becoming easily annoyed or irritable'},
+   {id:'gad7',t:'Feeling afraid, as if something awful might happen'}
+  ]
+ };
+ const TOOLS=[PHQ9,PSS10,GAD7];
+ const MAX_RAW=88;
+ const RISKS=[
+  {min:0, max:24, level:'Low Risk',     emoji:'🟢', colour:'#22C55E', msg:"You're managing well. Keep protecting your energy — rest is part of the work."},
+  {min:25,max:49, level:'Moderate Risk',emoji:'🟡', colour:'#F59E0B', msg:'Some stress signals detected. This is the right time to rest and recharge before it builds further.'},
+  {min:50,max:74, level:'High Risk',    emoji:'🟠', colour:'#EA580C', msg:'Significant burnout risk detected. Please prioritise self-care and speak with someone you trust.'},
+  {min:75,max:100,level:'Critical Risk',emoji:'🔴', colour:'#DC2626', msg:'Critical risk level. Immediate rest and support are recommended. You deserve care too.'}
+ ];
+ const SAFETY_MSG={
+  heading:'You are not alone.',
+  body:'Your answer to one question suggests you may be having difficult thoughts. Please reach out to a supervisor, friend, or counsellor.',
+  hotline:'SURPIN: 0800-787746-1'
+ };
+ function scoreTool(tool, responses){
+  return tool.questions.reduce((tot,q)=>{
+   const raw=Number(responses[q.id]??0);
+   const scored=(tool.id==='pss10'&&q.rev)?(tool.scale.length-1)-raw:raw;
+   return tot+scored;
+  },0);
+ }
+ function computeBRI(responses){
+  const phq=scoreTool(PHQ9,responses), pss=scoreTool(PSS10,responses), gad=scoreTool(GAD7,responses);
+  const raw=phq+pss+gad, bri=Math.round((raw/MAX_RAW)*100);
+  const risk=RISKS.find(r=>bri>=r.min&&bri<=r.max)||RISKS[0];
+  const safety=Number(responses['phq9']??0)>0;
+  return{bri,phq,pss,gad,raw,...risk,safetyTriggered:safety,safetyMessage:safety?SAFETY_MSG:null,timestamp:new Date().toISOString()};
+ }
+ function computeTrend(history){
+  if(!history||history.length<2)return{direction:'none',label:'First check-in',colour:'#5E8E89'};
+  const delta=history[0].bri-history[1].bri;
+  if(delta<=-5)return{direction:'improving',label:'↓ Improving', colour:'#22C55E',delta};
+  if(delta>=5) return{direction:'worsening',label:'↑ Worsening', colour:'#EF4444',delta};
+  return         {direction:'stable',   label:'→ Stable',    colour:'#8BBDB8',delta};
+ }
+ return{TOOLS,computeBRI,computeTrend};
+})();
+
+// ══════════════════════════════════════════════
+//  BURNOUT STORAGE
+// ══════════════════════════════════════════════
+const BS=(function(){
+ const KEY_H='ulera_burn_hist', KEY_D='ulera_burn_due';
+ const WEEK=7*24*60*60*1000, GRACE=2*24*60*60*1000;
+ function getHistory(){try{const r=localStorage.getItem(KEY_H);return r?JSON.parse(r):[];}catch{return[];}}
+ function saveResult(res){
+  try{
+   const h=getHistory();h.unshift(res);
+   localStorage.setItem(KEY_H,JSON.stringify(h.slice(0,52)));
+   localStorage.setItem(KEY_D,new Date().toISOString());
+  }catch(e){console.warn('BurnoutStorage save failed',e);}
+ }
+ function getLatest(){const h=getHistory();return h.length?h[0]:null;}
+ function getRecent(n=4){return getHistory().slice(0,n);}
+ function getStatus(){
+  const d=localStorage.getItem(KEY_D);
+  if(!d)return{status:'first_time',daysUntilDue:0};
+  const next=new Date(new Date(d).getTime()+WEEK), now=new Date(), grace=new Date(next.getTime()+GRACE);
+  if(now<next)return{status:'not_due',daysUntilDue:Math.ceil((next-now)/(24*60*60*1000)),nextDue:next.toISOString()};
+  if(now<=grace)return{status:'grace',daysUntilDue:0};
+  return{status:'overdue',daysUntilDue:0};
+ }
+ function isDue(){return['first_time','grace','overdue'].includes(getStatus().status);}
+ function clearAll(){localStorage.removeItem(KEY_H);localStorage.removeItem(KEY_D);}
+ return{getHistory,saveResult,getLatest,getRecent,getStatus,isDue,clearAll};
+})();
+
+// ══════════════════════════════════════════════
+//  DASHBOARD GAUGE — load from storage on launch
+// ══════════════════════════════════════════════
+function loadBurnoutDashboard(){
+ const latest=BS.getLatest(), status=BS.getStatus();
+ const ring=document.getElementById('burnRing'), scoreEl=document.getElementById('burnScore');
+ const labelEl=document.getElementById('burnLabel'), ctaEl=document.getElementById('burnCTA');
+ const dateEl=document.getElementById('burnLastDate'), trendWrap=document.getElementById('burnTrendWrap');
+ const trendBadge=document.getElementById('burnTrendBadge');
+ if(!ring)return;
+ if(!latest){
+  scoreEl.textContent='—';
+  labelEl.textContent='No data yet';
+  labelEl.style.color='var(--muted)';
+  ring.style.strokeDashoffset='226';
+  ring.style.stroke='var(--teal)';
+  ctaEl.textContent='Take Your First Check-in →';
+  return;
+ }
+ // Animate gauge
+ ring.style.stroke=latest.colour;
+ setTimeout(()=>{ring.style.strokeDashoffset=String(226-(226*latest.bri/100));},200);
+ let c=0; const iv=setInterval(()=>{c=Math.min(c+2,latest.bri);scoreEl.textContent=c;if(c>=latest.bri)clearInterval(iv);},20);
+ labelEl.textContent=latest.emoji+' '+latest.level;
+ labelEl.style.color=latest.colour;
+ // Sub-bars
+ const phqPct=Math.round((latest.phq/27)*100);
+ const pssPct=Math.round((latest.pss/40)*100);
+ const gadPct=Math.round((latest.gad/21)*100);
+ document.getElementById('bar-ex').style.width=phqPct+'%';document.getElementById('bar-ex').style.background=latest.colour;document.getElementById('bv-ex').textContent=latest.phq+'/27';
+ document.getElementById('bar-dp').style.width=pssPct+'%';document.getElementById('bar-dp').style.background=latest.colour;document.getElementById('bv-dp').textContent=latest.pss+'/40';
+ document.getElementById('bar-fu').style.width=gadPct+'%';document.getElementById('bar-fu').style.background=latest.colour;document.getElementById('bv-fu').textContent=latest.gad+'/21';
+ // Trend
+ const hist=BS.getRecent(4);
+ if(hist.length>=2){
+  const trend=BE.computeTrend(hist);
+  trendBadge.textContent=trend.label;trendBadge.style.color=trend.colour;trendBadge.style.borderColor=trend.colour;
+  trendWrap.style.display='block';
+ }
+ // Date + CTA
+ const dt=new Date(latest.timestamp);
+ dateEl.textContent='Last check-in: '+dt.toLocaleDateString('en-NG',{weekday:'short',month:'short',day:'numeric'});
+ if(status.status==='overdue'){ctaEl.textContent='⚠ Check-in Overdue — Update Now';ctaEl.classList.add('ba-cta-overdue');}
+ else if(status.status==='not_due'){ctaEl.textContent='Next check-in in '+status.daysUntilDue+' day'+(status.daysUntilDue===1?'':'s');ctaEl.style.opacity='0.45';ctaEl.style.pointerEvents='none';}
+ else{ctaEl.textContent='Take This Week\'s Check-in →';}
+}
+
+// ══════════════════════════════════════════════
+//  ASSESSMENT FLOW
+// ══════════════════════════════════════════════
+let baStep=0, baResponses={}, baSafetyShown=false, baResultSaved=false;
+const baAllQ=(()=>{const a=[];BE.TOOLS.forEach(t=>t.questions.forEach(q=>a.push({tool:t,q})));return a;})();
+const BA_TOTAL=baAllQ.length; // 26
+
+function openBurnoutAssess(){
+ // Reset state
+ baStep=0;baResponses={};baSafetyShown=false;baResultSaved=false;
+ document.getElementById('baWelcome').style.display='block';
+ document.getElementById('baQuestions').style.display='none';
+ document.getElementById('baSafety').style.display='none';
+ document.getElementById('baResults').style.display='none';
+ document.getElementById('baBtnBack').style.display='none';
+ document.getElementById('baBtnNext').textContent='Start Check-in';
+ document.getElementById('baBtnNext').disabled=false;
+ document.getElementById('baProgBar').style.width='0%';
+ document.getElementById('baProgLbl').textContent='Getting started…';
+ document.getElementById('baBadge').textContent='PHQ-9';
+ openPanel('burnoutAssessPanel');
+}
+
+function baUpdateProgress(){
+ if(baStep===0){document.getElementById('baProgBar').style.width='0%';document.getElementById('baProgLbl').textContent='Getting started…';return;}
+ if(baStep>BA_TOTAL){document.getElementById('baProgBar').style.width='100%';document.getElementById('baProgLbl').textContent='Complete!';return;}
+ const pct=Math.round((baStep/BA_TOTAL)*100);
+ document.getElementById('baProgBar').style.width=pct+'%';
+ document.getElementById('baProgLbl').textContent='Question '+baStep+' of '+BA_TOTAL;
+ const tool=baAllQ[baStep-1].tool;
+ document.getElementById('baBadge').textContent=tool.name;
+}
+
+function baRenderQuestion(){
+ const item=baAllQ[baStep-1], {tool,q}=item;
+ // Tool badge + prompt (show at first Q of each tool)
+ const prevTool=baStep>1?baAllQ[baStep-2].tool:null;
+ document.getElementById('baToolBadge').textContent=tool.name;
+ document.getElementById('baToolPrompt').textContent=(prevTool?.id!==tool.id)?tool.prompt:'';
+ document.getElementById('baQNum').textContent='Question '+baStep+' of '+BA_TOTAL;
+ document.getElementById('baQText').textContent=q.t;
+ const optsEl=document.getElementById('baOpts');
+ optsEl.innerHTML=tool.scale.map(opt=>{
+  const sel=baResponses[q.id]===opt.v?' sel':'';
+  return`<div class="ba-opt${sel}" onclick="baSelect('${q.id}',${opt.v},this)"><div class="ba-opt-dot"></div><span class="ba-opt-lbl">${opt.l}</span></div>`;
+ }).join('');
+ document.getElementById('baWelcome').style.display='none';
+ document.getElementById('baQuestions').style.display='block';
+ document.getElementById('baSafety').style.display='none';
+ document.getElementById('baResults').style.display='none';
+ baUpdateNextBtn();
+}
+
+function baSelect(qId, val, el){
+ baResponses[qId]=val;
+ el.closest('.ba-opts').querySelectorAll('.ba-opt').forEach(o=>{o.classList.remove('sel');o.querySelector('.ba-opt-dot').innerHTML='';});
+ el.classList.add('sel');
+ baUpdateNextBtn();
+}
+
+function baUpdateNextBtn(){
+ const btn=document.getElementById('baBtnNext');
+ if(baStep===0){btn.disabled=false;btn.textContent='Start Check-in';return;}
+ if(baStep>BA_TOTAL){btn.disabled=false;btn.textContent='Back to Dashboard';return;}
+ const qId=baAllQ[baStep-1].q.id;
+ btn.disabled=baResponses[qId]===undefined;
+ btn.textContent=baStep===BA_TOTAL?'See My Results →':'Next →';
+}
+
+function baNext(){
+ if(baStep===0){
+  baStep=1;
+  document.getElementById('baBtnBack').style.display='block';
+  baRenderQuestion();baUpdateProgress();return;
+ }
+ if(baStep===BA_TOTAL){
+  // Check safety flag
+  const safQ=baAllQ.find(i=>i.q.safety);
+  if(safQ&&(baResponses[safQ.q.id]||0)>0&&!baSafetyShown){
+   baSafetyShown=true;
+   document.getElementById('baQuestions').style.display='none';
+   document.getElementById('baSafety').style.display='block';
+   document.getElementById('baBtnBack').style.display='none';
+   document.getElementById('baBtnNext').textContent='Continue to Results →';
+   document.getElementById('baBtnNext').disabled=false;
+   return;
+  }
+  baShowResults();return;
+ }
+ // Safety screen → results
+ if(baSafetyShown&&document.getElementById('baSafety').style.display!=='none'){
+  baShowResults();return;
+ }
+ // Results → dashboard
+ if(baStep>BA_TOTAL){closePanel('burnoutAssessPanel');loadBurnoutDashboard();return;}
+ baStep++;baRenderQuestion();baUpdateProgress();
+}
+
+function baBack(){
+ if(baStep<=1){
+  baStep=0;
+  document.getElementById('baWelcome').style.display='block';
+  document.getElementById('baQuestions').style.display='none';
+  document.getElementById('baBtnBack').style.display='none';
+  document.getElementById('baBtnNext').textContent='Start Check-in';
+  document.getElementById('baBtnNext').disabled=false;
+  document.getElementById('baProgBar').style.width='0%';
+  document.getElementById('baProgLbl').textContent='Getting started…';
+  return;
+ }
+ baStep--;baRenderQuestion();baUpdateProgress();
+}
+
+function baShowResults(){
+ const result=BE.computeBRI(baResponses);
+ if(!baResultSaved){BS.saveResult(result);baResultSaved=true;}
+ // Ring animation
+ const fill=document.getElementById('resRingFill');
+ fill.style.stroke=result.colour;
+ setTimeout(()=>{fill.style.strokeDashoffset=String(226-(226*result.bri/100));},100);
+ const briEl=document.getElementById('resBRI');
+ let c=0;const iv=setInterval(()=>{c=Math.min(c+2,result.bri);briEl.textContent=c;if(c>=result.bri)clearInterval(iv);},20);
+ briEl.style.color=result.colour;
+ document.getElementById('resLevel').textContent=result.emoji+' '+result.level;
+ document.getElementById('resLevel').style.color=result.colour;
+ document.getElementById('resMsg').textContent=result.msg;
+ document.getElementById('resPHQ').textContent=result.phq+' / 27';
+ document.getElementById('resPSS').textContent=result.pss+' / 40';
+ document.getElementById('resGAD').textContent=result.gad+' / 21';
+ // Trend
+ const hist=BS.getRecent(4);
+ if(hist.length>=2){
+  const trend=BE.computeTrend(hist);
+  document.getElementById('resTrend').textContent=trend.label;
+  document.getElementById('resTrend').style.color=trend.colour;
+  document.getElementById('resTrendWrap').style.display='block';
+ }
+ document.getElementById('baQuestions').style.display='none';
+ document.getElementById('baSafety').style.display='none';
+ document.getElementById('baResults').style.display='block';
+ document.getElementById('baBtnBack').style.display='none';
+ document.getElementById('baBtnNext').textContent='Back to Dashboard';
+ document.getElementById('baBtnNext').disabled=false;
+ baStep=BA_TOTAL+1;baUpdateProgress();
+ document.getElementById('baContent').scrollTo({top:0,behavior:'smooth'});
+}
 </script>
 
 <!-- LIVE AI PANEL -->
@@ -912,8 +1226,128 @@ function openLiveAI(){openPanel('liveAIPanel');}
  </div>
 </div>
 
+<!-- ═══════════════ BURNOUT ASSESSMENT PANEL ═══════════════ -->
+<div class="panel" id="burnoutAssessPanel">
+ <div class="top-bar">
+  <button class="back-btn" onclick="closePanel('burnoutAssessPanel')" id="baBackBtn">←</button>
+  <div style="flex:1;">
+   <div style="font-size:0.88rem;font-weight:700;">Weekly Check-in</div>
+   <div style="font-size:0.6rem;color:var(--muted);">Burnout Risk Assessment</div>
+  </div>
+  <span class="badge badge-teal" id="baBadge">PHQ-9</span>
+ </div>
+ <div style="padding:0 1.1rem;">
+  <div class="ba-prog-track"><div class="ba-prog-fill" id="baProgBar" style="width:0%;"></div></div>
+  <div class="ba-prog-lbl" id="baProgLbl">Getting started…</div>
+ </div>
+
+ <div style="flex:1;overflow-y:auto;padding:1.1rem;scrollbar-width:none;" id="baContent">
+
+  <!-- WELCOME -->
+  <div id="baWelcome">
+   <div style="text-align:center;padding:1.5rem 0 1rem;">
+    <div style="font-size:3rem;margin-bottom:0.75rem;">🌿</div>
+    <div style="font-size:1.1rem;font-weight:700;color:var(--teal2);margin-bottom:0.5rem;">How are you really doing?</div>
+    <div style="font-size:0.78rem;color:var(--muted2);line-height:1.65;max-width:280px;margin:0 auto;">
+     This check-in takes about 5 minutes.<br>
+     Your answers are stored privately on your device — nobody else sees them.<br><br>
+     They power your burnout risk indicator with real clinical data.
+    </div>
+   </div>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div id="baQuestions" style="display:none;">
+   <div class="ba-tool-badge" id="baToolBadge">PHQ-9</div>
+   <div class="ba-prompt" id="baToolPrompt"></div>
+   <div class="ba-qnum" id="baQNum"></div>
+   <div class="ba-qtext" id="baQText"></div>
+   <div class="ba-opts" id="baOpts"></div>
+  </div>
+
+  <!-- SAFETY -->
+  <div id="baSafety" style="display:none;">
+   <div class="ba-safety">
+    <h3>💙 You are not alone.</h3>
+    <p>One of your answers suggests you may be having some difficult thoughts right now.</p>
+    <p>Please reach out to someone you trust — a supervisor, a friend, a counsellor, or a family member.</p>
+    <p>If you are in Nigeria, this line is free and confidential:</p>
+    <span class="ba-hotline">SURPIN: 0800-787746-1</span>
+    <p style="margin-top:0.75rem;font-size:0.7rem;opacity:0.8;">You can still complete your check-in. Tap Continue when ready.</p>
+   </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="baResults" style="display:none;text-align:center;">
+   <div style="margin-bottom:1rem;">
+    <svg viewBox="0 0 88 88" width="100" height="100" style="transform:rotate(-90deg);margin:0 auto;display:block;">
+     <circle fill="none" stroke="rgba(11,158,138,0.12)" stroke-width="7" cx="44" cy="44" r="36"/>
+     <circle fill="none" stroke-width="7" stroke-linecap="round" cx="44" cy="44" r="36" stroke-dasharray="226" stroke-dashoffset="226" id="resRingFill" style="transition:stroke-dashoffset 1s ease,stroke 0.4s;"/>
+    </svg>
+   </div>
+   <div class="ba-res-bri" id="resBRI" style="color:var(--teal2);">0</div>
+   <div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.4rem;">/ 100 Burnout Risk Index</div>
+   <div class="ba-res-level" id="resLevel"></div>
+   <div class="ba-res-msg" id="resMsg"></div>
+   <div class="ba-breakdown">
+    <div class="ba-brow"><span class="ba-brow-lbl">Depression (PHQ-9)</span><span class="ba-brow-val" id="resPHQ">—</span></div>
+    <div class="ba-brow"><span class="ba-brow-lbl">Stress (PSS-10)</span><span class="ba-brow-val" id="resPSS">—</span></div>
+    <div class="ba-brow"><span class="ba-brow-lbl">Anxiety (GAD-7)</span><span class="ba-brow-val" id="resGAD">—</span></div>
+   </div>
+   <div id="resTrendWrap" style="display:none;margin-bottom:0.75rem;">
+    <div class="ba-trend-row" id="resTrend"></div>
+   </div>
+  </div>
+
+ </div><!-- end baContent -->
+
+ <div class="ba-footer-btns">
+  <button class="ba-btn ba-btn-sec" id="baBtnBack" style="display:none;" onclick="baBack()">Back</button>
+  <button class="ba-btn ba-btn-pri" id="baBtnNext" onclick="baNext()">Start Check-in</button>
+ </div>
+</div>
+
 <style>
 @keyframes orbPulse{0%,100%{box-shadow:0 0 40px rgba(124,58,237,0.4),0 0 80px rgba(124,58,237,0.2);}50%{box-shadow:0 0 60px rgba(124,58,237,0.7),0 0 120px rgba(124,58,237,0.35);}}
+
+/* ── BURNOUT ASSESSMENT PANEL ── */
+.ba-prog-track{height:3px;background:rgba(11,158,138,0.15);border-radius:2px;margin-top:0.75rem;}
+.ba-prog-fill{height:3px;background:var(--teal2);border-radius:2px;transition:width 0.4s ease;}
+.ba-prog-lbl{font-size:0.6rem;color:var(--muted);margin-top:0.3rem;}
+.ba-tool-badge{display:inline-block;background:var(--teal3);color:var(--teal2);border:1px solid var(--border2);font-size:0.58rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:0.2rem 0.55rem;border-radius:100px;margin-bottom:0.6rem;}
+.ba-prompt{font-size:0.82rem;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:1rem;}
+.ba-qnum{font-size:0.6rem;font-weight:700;color:var(--teal2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;}
+.ba-qtext{font-size:0.85rem;color:var(--text);line-height:1.55;margin-bottom:1rem;font-weight:400;}
+.ba-opts{display:flex;flex-direction:column;gap:0.55rem;}
+.ba-opt{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0.9rem;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;background:var(--card);transition:border-color 0.15s,background 0.15s;-webkit-tap-highlight-color:transparent;}
+.ba-opt.sel{border-color:var(--teal);background:var(--card2);}
+.ba-opt-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.ba-opt.sel .ba-opt-dot{border-color:var(--teal2);background:var(--teal2);}
+.ba-opt.sel .ba-opt-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:white;}
+.ba-opt-lbl{font-size:0.8rem;color:var(--muted2);}
+.ba-opt.sel .ba-opt-lbl{color:var(--text);}
+.ba-safety{background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.25);border-radius:14px;padding:1.1rem;}
+.ba-safety h3{font-size:1rem;color:#FCA5A5;margin-bottom:0.5rem;}
+.ba-safety p{font-size:0.75rem;color:rgba(252,165,165,0.85);line-height:1.6;margin-bottom:0.4rem;}
+.ba-hotline{font-size:1rem;font-weight:700;color:#FCA5A5;display:block;margin-top:0.5rem;}
+.ba-res-bri{font-size:2.8rem;font-weight:800;font-family:var(--mono);line-height:1;}
+.ba-res-level{font-size:1rem;font-weight:700;margin:0.3rem 0 0.75rem;}
+.ba-res-msg{font-size:0.78rem;color:var(--muted2);line-height:1.6;margin-bottom:1rem;}
+.ba-breakdown{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1rem;}
+.ba-brow{display:flex;justify-content:space-between;align-items:center;padding:0.65rem 0.9rem;border-bottom:1px solid var(--border);font-size:0.78rem;}
+.ba-brow:last-child{border-bottom:none;}
+.ba-brow-lbl{color:var(--muted2);}
+.ba-brow-val{font-weight:700;font-family:var(--mono);}
+.ba-trend-row{display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;font-weight:600;padding:0.45rem 0.85rem;border-radius:100px;background:var(--card);border:1px solid var(--border);display:inline-flex;margin-bottom:1rem;}
+.ba-footer-btns{position:sticky;bottom:0;background:var(--bg2);border-top:1px solid var(--border);padding:0.85rem 1.1rem;display:flex;gap:0.65rem;}
+.ba-btn{flex:1;padding:0.78rem;border:none;border-radius:12px;font-family:var(--font);font-size:0.85rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity 0.15s;}
+.ba-btn-pri{background:linear-gradient(135deg,var(--teal),#0a8070);color:white;}
+.ba-btn-pri:disabled{background:rgba(11,158,138,0.2);color:var(--muted);cursor:not-allowed;}
+.ba-btn-sec{background:var(--card);border:1px solid var(--border);color:var(--muted2);}
+.ba-cta-btn{width:100%;padding:0.7rem;background:linear-gradient(135deg,var(--teal),#0a8070);border:none;border-radius:12px;color:white;font-family:var(--font);font-size:0.82rem;font-weight:700;cursor:pointer;margin-top:0.75rem;}
+.ba-cta-overdue{background:linear-gradient(135deg,#EF4444,#b91c1c);}
+.ba-last-date{font-size:0.65rem;color:var(--muted);text-align:center;margin-top:0.45rem;}
+.ba-trend-mini{display:flex;align-items:center;gap:0.4rem;font-size:0.68rem;font-weight:600;padding:0.25rem 0.65rem;border-radius:100px;border:1px solid var(--border);background:var(--card);margin-top:0.5rem;display:inline-flex;}
 </style>
 </body>
 </html>
