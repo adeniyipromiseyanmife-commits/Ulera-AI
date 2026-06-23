@@ -89,3 +89,4 @@ At the bottom of `index.html`, before `</body>`, add:
 - Nothing is sent to any server
 - Users can clear data via `BurnoutStorage.clearAllData()` (call from your settings page)
 - PHQ-9 Item 9 safety message always shows when score > 0, regardless of overall BRI
+https://claude.ai/public/artifacts/f5cfac5c-0375-44dd-b18f-1ae34ce0efc0
