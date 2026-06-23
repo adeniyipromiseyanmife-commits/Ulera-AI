@@ -1,5 +1,6 @@
-Ùlẹ̀rà AI
-Ìtọ́jú fún àwọn olùtọ́jú àti ẹni tí wọn tọ́jú
+
+## Ùlẹ̀rà AI
+# Ìtọ́jú fún àwọn olùtọ́jú àti ẹni tí wọn tọ́jú
 (Care for the caregivers and those they care for)
 3MTT NextGen Knowledge Showcase 2026 | FEED Pillars: Financial Inclusion · Education · Environment · Digital Inclusion Built by Promise Yanmife Adeniyi — 3MTT NextGen Fellow | FE/25/338214153 | Nigeria
 What is Ùlẹ̀rà AI?
@@ -135,8 +136,6 @@ Fellow ID: FE/25/338214153
 Contact
 Promise Yanmife Adeniyi 3MTT NextGen Fellow · Ibadan, Oyo State, Nigeria · 2026 adeniyipromiseyanmife@gmail.com
 Ùlẹ̀rà AI — Ìtọ́jú fún àwọn olùtọ́jú àti ẹni tí wọn tọ́jú
-
-
 
 # Ùlẹ̀rà AI — Burnout Detector Update
 ## Files in this folder
